@@ -23,10 +23,10 @@ $translation = array("home" => "Privat", "mobile" => "Mobil", "work" => "Geschä
 
 if(isset($_GET["refresh"]))
 {
-    $fritzCfg    = 'http://fritz.box/cgi-bin/firmwarecfg';
+    $fritzCfg    = 'http://' . $fritzbox_ip . '/cgi-bin/firmwarecfg';
     $telefonbuch = 0; // startbook 
 
-    $ch = curl_init('http://fritz.box/login_sid.lua');
+    $ch = curl_init('http://' . $fritzbox_ip . '/login_sid.lua');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     $login = curl_exec($ch);
     $session_status_simplexml = simplexml_load_string($login);
