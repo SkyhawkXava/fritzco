@@ -9,6 +9,7 @@ How to Install:
 2. Add write permission to folder "books"
 3. Change credentials in config.inc.php
 4. Add this to your SEP<MAC>.cnf
+```xml
 	    <phoneServices>
 	        <provisioning>2</provisioning>
 	        <phoneService  type="1" category="0">
@@ -17,4 +18,5 @@ How to Install:
 	            <vendor></vendor>
 	            <version></version>
 	        </phoneService>
-	    </phoneServices> 
+	    </phoneServices>
+```
