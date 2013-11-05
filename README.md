@@ -9,12 +9,12 @@ How to Install:
 2. Add write permission to folder "books"
 3. Change credentials in config.inc.php
 4. Add this to your SEP<MAC>.cnf
-    <phoneServices>
-        <provisioning>2</provisioning>
-        <phoneService  type="1" category="0">
-            <name>Telefonbuch</name>
-            <url>http://yourServer.abc/directory.php</url>
-            <vendor></vendor>
-            <version></version>
-        </phoneService>
-    </phoneServices> 
+	    <phoneServices>
+	        <provisioning>2</provisioning>
+	        <phoneService  type="1" category="0">
+	            <name>Telefonbuch</name>
+	            <url>http://yourServer.abc/directory.php</url>
+	            <vendor></vendor>
+	            <version></version>
+	        </phoneService>
+	    </phoneServices> 
