@@ -3,6 +3,11 @@ fritzco
 
 a set of scripts to add functionality to a Cisco 99xx phone connected to fritzboxes
 
+Requirements:
+-------------
+* Webserver
+* PHP 5.4
+
 How to Install:
 ---------------
 1. Put all files on your webserver
