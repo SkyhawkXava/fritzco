@@ -6,7 +6,7 @@ a set of scripts to add functionality to a Cisco 99xx phone connected to fritzbo
 Requirements:
 -------------
 * Webserver
-* PHP 5.4
+* PHP 5.3
 
 How to Install:
 ---------------
