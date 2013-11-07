@@ -13,8 +13,8 @@ class CiscoIPPhoneInput extends CiscoIPPhoneDisplayableType{
     }
 
     public function setURL($url) {
-        if($url && strlen($url)>256){
-            throw new \LengthException('URL must have not more than 256 characters');
+        if(!$url || strlen($url)>256){
+            throw new \LengthException('URL is required and must have not more than 256 characters');
         }
         $this->url = $url;
     }

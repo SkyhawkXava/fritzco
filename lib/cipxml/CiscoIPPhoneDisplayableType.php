@@ -26,7 +26,7 @@ class CiscoIPPhoneDisplayableType extends XMLElement{
     protected $softkey_items = array();
     protected $key_items = array();
     protected $keypadTarget = null;
-    protected $appID = null;
+    protected $appId = null;
     protected $onAppFocusLost = null;
     protected $onAppFocusGained = null;
     protected $onAppMinimized = null;
@@ -83,11 +83,11 @@ class CiscoIPPhoneDisplayableType extends XMLElement{
         $this->keypadTarget = $keypadTarget;
     }
 
-    public function setAppID($appID) {
-        if($appID && (strlen($appID)<1 || strlen($appID)>64)){
+    public function setAppId($appId) {
+        if($appId && (strlen($appId)<1 || strlen($appId)>64)){
             throw new \LengthException('appId must be at least 1 character, but not more than 64 characters');
         }
-        $this->appID = $appID;
+        $this->appId = $appId;
     }
 
     public function setOnAppFocusLost($onAppFocusLost) {
@@ -141,14 +141,14 @@ class CiscoIPPhoneDisplayableType extends XMLElement{
             $domAttribute->value = KeypadTarget::string($GLOBALS['keypadTarget']);
             $domNode->appendChild($domAttribute);
         }
-        if($this->appID){
-            $domAttribute = $domNode->ownerDocument->createAttribute('appID');
-            $domAttribute->value = $this->appID;
+        if($this->appId){
+            $domAttribute = $domNode->ownerDocument->createAttribute('appId');
+            $domAttribute->value = $this->appId;
             $domNode->appendChild($domAttribute);
         }
-        else if(isset($GLOBALS['appID'])){
-            $domAttribute = $domNode->ownerDocument->createAttribute('appID');
-            $domAttribute->value = $GLOBALS['appID'];
+        else if(isset($GLOBALS['appId'])){
+            $domAttribute = $domNode->ownerDocument->createAttribute('appId');
+            $domAttribute->value = $GLOBALS['appId'];
             $domNode->appendChild($domAttribute);
         }
         if($this->onAppFocusLost){

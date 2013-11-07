@@ -72,7 +72,7 @@ class InputItem extends XMLElement{
     }
     
     public function setInputFlags($inputFlags) {
-        if($inputFlags && $inputFlags>InputFlags::_max){
+        if(!$inputFlags || $inputFlags>InputFlags::_max){
             throw new \InvalidArgumentException('no valid inputFlags, please use ENUM InputFlags to specify inputFlags (e.g. InputFlags::AP)');
         }
         $this->inputFlags = $inputFlags;
@@ -95,17 +95,17 @@ class InputItem extends XMLElement{
             $displayName->appendChild($displayName_text);
             $root->appendChild($displayName);
         }
-        if($this->inputFlags){
-            $inputFlags = $domNode->ownerDocument->createElement('InputFlags');
-            $inputFlags_text = $domNode->ownerDocument->createTextNode(InputFlags::string($this->inputFlags));
-            $inputFlags->appendChild($inputFlags_text);
-            $root->appendChild($inputFlags);
-        }
         if($this->queryStringParam){
             $queryStringParam = $domNode->ownerDocument->createElement('QueryStringParam');
             $queryStringParam_text = $domNode->ownerDocument->createTextNode($this->queryStringParam);
             $queryStringParam->appendChild($queryStringParam_text);
             $root->appendChild($queryStringParam);
+        }
+        if($this->inputFlags){
+            $inputFlags = $domNode->ownerDocument->createElement('InputFlags');
+            $inputFlags_text = $domNode->ownerDocument->createTextNode(InputFlags::string($this->inputFlags));
+            $inputFlags->appendChild($inputFlags_text);
+            $root->appendChild($inputFlags);
         }
         if($this->defaultValue){
             $defaultValue = $domNode->ownerDocument->createElement('DefaultValue');

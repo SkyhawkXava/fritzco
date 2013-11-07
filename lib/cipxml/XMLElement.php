@@ -4,10 +4,11 @@ namespace cipxml;
 
 class XMLElement{
 
-    public function toXML(\DOMNode $domDoc){
-        $root = $domDoc->createElement('MenuItem');
-        $domDoc->appendChild($root);
-        return $domDoc;
+    public function isValid(){
+        $domDoc = new \DOMDocument();
+        $domDoc->encoding='utf-8';
+        $this->toXML($domDoc);
+        return $domDoc->schemaValidate(dirname(__FILE__).'/schema.xsd');
     }
 
     public function __toString() {
