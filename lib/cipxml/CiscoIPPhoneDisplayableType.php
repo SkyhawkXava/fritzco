@@ -47,18 +47,13 @@ class CiscoIPPhoneDisplayableType extends XMLElement{
     }
 
    public function addSoftKeyItem(SoftKeyItem $softkey_item, $replace=true) {
-        if($replace){
-            for($i=0; $i<count($this->softkey_items); ++$i){
-                if($this->softkey_items[$i]->getPosition() == $softkey_item->getPosition()){
-                    unset($this->softkey_items[$i]);
-                    break;
-                }
-            }
+        if(!$replace && $this->softkey_items[$softkey_item->getPosition()-1]){
+            throw new \UnexpectedValueException('this position is already used');
         }
-        if(count($this->softkey_items)>=8){
+        if($softkey_item->getPosition()>=8){
             throw new \OutOfBoundsException('A displayable can only hold up to 8 softkeys');
         }
-        $this->softkey_items[] = $softkey_item;
+        $this->softkey_items[$softkey_item->getPosition()-1] = $softkey_item;
     }
     
     public function addKeyItem(KeyItem $key_item, $replace=true) {
