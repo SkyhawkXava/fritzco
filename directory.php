@@ -73,9 +73,15 @@ if(isset($_GET["refresh"]))
    header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
 }
 
+$has_books = false;
 if(!isset($_GET["book"]))
 {
-    if(count(scandir("books"))>2){
+    foreach(scandir("books") as $book){
+        if(is_file("books/$book") && strpos($book,'.xml') !== false){
+            $has_books=true;
+        }
+    }
+    if($has_books){
         $menu = new CiscoIpPhoneMenu('Telefonbücher', 'Telefonbuch auswählen');
         foreach(scandir("books") as $book){
             if(is_file("books/$book") && strpos($book,'.xml') !== false){
