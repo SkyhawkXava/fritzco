@@ -10,4 +10,7 @@
     $show_MissedCalls = true;
     $show_ReceivedCalls = true;
     $show_PlacedCalls = true;
+    
+    define ('QUICKDIAL_URL', 'http://intrasrv.fritz.box/cisco/quickdial.php');
+    define ('QUICKDIAL_NAME', 'Kurzwahlen');
 ?>
