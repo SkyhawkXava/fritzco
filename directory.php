@@ -6,6 +6,7 @@
  */
 
 require_once 'config.inc.php';
+require_once 'locale.german.inc.php';
 require_once __DIR__ . '/lib/cipxml/cipxml.php';
 
 use cipxml\CiscoIPPhoneDirectory;
@@ -22,12 +23,12 @@ use cipxml\Key;
 
 header("Content-type: text/xml");
 
-$translation = array("home" => "Privat", "mobile" => "Mobil", "work" => "Geschäftlich", "fax" => "Fax", "fax_work" => "Fax Geschäftlich", "private" => "Privat", "business" => "Geschäftlich", "other" => "Sonstige");
+$translation = array("home" => PB_FIELD_HOME, "mobile" => PB_FIELD_MOBILE, "work" => PB_FIELD_WORK, "fax" => PB_FIELD_FAX, "fax_work" => PB_FIELD_FAX_WORK, "private" => PB_FIELD_PRIVATE, "business" => PB_FIELD_BUSINESS, "other" => PB_FIELD_OTHER);
 
 if(isset($_GET["refresh"]))
 {
     $fritzCfg    = 'http://fritz.box/cgi-bin/firmwarecfg';
-    $telefonbuch = 1; // Auswahl des Telefonbuches 
+    $telefonbuch = 0; // Auswahl des Telefonbuches 
 
     $ch = curl_init('http://fritz.box/login_sid.lua');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -49,7 +50,7 @@ if(isset($_GET["refresh"]))
        }
        else
        {
-          $menu = new CiscoIpPhoneText('Aktualisieren', 'FritzBox Login Fehlgeschlagen', 'Administrator: Bitte das FritzBox Passwort in der config.php.inc überprüfen');
+          $menu = new CiscoIpPhoneText(PB_REFRESH, PB_NAME_GENERAL . ' ' . PB_LOGIN_FAILED, PB_ADMIN_CHECKPWD);
           echo '<?xml version="1.0" encoding="utf-8" ?>';
           echo (string) $menu; 
           return;
@@ -84,39 +85,42 @@ if(!isset($_GET["book"]))
         }
     }
     if($has_books){
-        $menu = new CiscoIpPhoneMenu('Telefonbücher', 'Telefonbuch auswählen');
+        $menu = new CiscoIpPhoneMenu(PB_PHONEBOOKS, PB_SELECT_PHONEBOOK);
         foreach(scandir("books") as $book){
             if(is_file("books/$book") && strpos($book,'.xml') !== false){
                $input = file_get_contents("books/$book");
                $xml = simplexml_load_string($input);
                $attributes = $xml->phonebook->attributes();
-               $name = $attributes["name"] . " (Fritzbox)";
+               $name = $attributes["name"] . " (" . PB_NAME_GENERAL . ")";
                $get = $_GET;
                unset($get['refresh']);
                $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query(array_merge($get,array("book"=>$book)));
                $menu->addMenuItem(new MenuItem($name, $url));
             }
         }
+		if (strlen(QUICKDIAL_URL)>0) { // EDIT CB 20131111: Kurzwahlen fest mit eincodieren.
+          $menu->addMenuItem(new MenuItem(QUICKDIAL_NAME, QUICKDIAL_URL));
+		}
         if($show_MissedCalls){
-            $menu->addMenuItem(new MenuItem('Anrufe in Abwesenheit', 'Application:Cisco/MissedCalls'));
+            $menu->addMenuItem(new MenuItem(PB_APP_CALLSMISSED, 'Application:Cisco/MissedCalls'));
         }
         if($show_ReceivedCalls){
-            $menu->addMenuItem(new MenuItem('Angenommene Anrufe', 'Application:Cisco/ReceivedCalls'));
+            $menu->addMenuItem(new MenuItem(PB_APP_CALLSRECEIVED, 'Application:Cisco/ReceivedCalls'));
         }
         if($show_MissedCalls){
-            $menu->addMenuItem(new MenuItem('Ausgehende Anrufe', 'Application:Cisco/PlacedCalls'));
+            $menu->addMenuItem(new MenuItem(PB_APP_CALLSPLACED, 'Application:Cisco/PlacedCalls'));
         }
-        
-        $menu->addSoftKeyItem(new SoftKeyItem('Verlassen', 1, 'SoftKey:Exit'));
-        $menu->addSoftKeyItem(new SoftKeyItem('Auswählen', 2, 'SoftKey:Select'));
+		
+        $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_SELECT, 1, 'SoftKey:Select')); // EDIT CB 20131111: Buttons getauscht, damit Auswahl immer auf 1.
+		$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_EXIT, 2, 'SoftKey:Exit'));
         $url = 'http://' . $_SERVER['SERVER_NAME'] .  $_SERVER['PHP_SELF'] .  '?refresh';
-        $menu->addSoftKeyItem(new SoftKeyItem('Aktualisieren', 4, $url));
+        $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_REFRESH, 4, $url));
     }
     else{
-        $menu = new CiscoIpPhoneText('Telefonbücher', 'Keine Telefonbücher vorhanden', 'Es sind derzeit keine Telefonbücher vorhanden, durch "Aktualisieren" kann die FritzBox ausgelesen werden. Dies kann einige Sekunden dauern! Nach Änderungen im FritzBox-Telefonbuch muss erneut das Aktualisieren ausgeführt werden.');
-        $menu->addSoftKeyItem(new SoftKeyItem('Zurück', 1, 'SoftKey:Back'));
+        $menu = new CiscoIpPhoneText(PB_PHONEBOOKS, PB_NO_PHONEBOOKS, PB_NO_PHONEBOOKS_DESC);
+        $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 1, 'SoftKey:Exit'));
         $url = 'http://' . $_SERVER['SERVER_NAME'] .  $_SERVER['PHP_SELF'] .  '?refresh';
-        $menu->addSoftKeyItem(new SoftKeyItem('Aktualisieren', 4, $url));
+        $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_REFRESH, 4, $url));
         header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
     }
 }
@@ -153,7 +157,7 @@ else{
 
     if(!isset($_GET["id"])){
         if(!isset($_GET["search"])){
-            //header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
+            // header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
             $offset = 0;
             if(isset($_GET["offset"])){
                 $offset = (int) $_GET["offset"];
@@ -161,35 +165,40 @@ else{
             $attributes = $xml->phonebook->attributes();
            
             if(count($xml->phonebook->contact)>0){
-                $menu = new CiscoIpPhoneMenu('Fritzbox Telefonbuch', $attributes['name']); 
+                $menu = new CiscoIpPhoneMenu(PB_NAME_GENERAL . ' ' . PB_PHONEBOOK, $attributes['name']); // EDIT CB 20131111: Fritzbox ersetzt.
                 for ($i = $offset; $i < count($xml->phonebook->contact) && $i<$offset+30; ++$i){ 
                     $name = $xml->phonebook->contact[$i]->person->realName;
                     $url = "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "&" . "id=" . $i;
                     $menu->addMenuItem(new MenuItem($name, $url));
                 }
-                $menu->addSoftKeyItem(new SoftKeyItem('Zurück', 1, 'SoftKey:Exit'));
-                $menu->addSoftKeyItem(new SoftKeyItem('Auswählen', 2, 'SoftKey:Select'));
+                $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_SELECT, 1, 'SoftKey:Select')); // EDIT CB 20131111: Buttons getauscht, damit Auswahl immer auf 1.
+				$url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"];
+				$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 2, $url)); // EDIT CB 20131111: Rücksprung geändert.
                 $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query(array_merge($_GET,array("search"=>true)));
-                $menu->addSoftKeyItem(new SoftKeyItem('Suche', 3, $url));
-        
+                $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_SEARCH, 3, $url));
+ 
+				$get = $_GET; // EDIT 20131112: Alten Offset aus Query werfen.
+				unset($get['offset']);
+				$tmp_url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
+ 
                 if($offset>0){
                     $newoffset = $offset-30;
                     if($newoffset<0){
                         $newoffset=0;
                     }
-                    $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"] . "&" . "offset=" .  $newoffset;
-                    $menu->addSoftKeyItem(new SoftKeyItem('Vorherige Seite', 3, $url));
-                    $menu->addKeyItem(new KeyItem(Key::NavLeft,$url));
+                    $url = $tmp_url . "&" . "offset=" .  $newoffset; // EDIT 20131112: Neuen Offset erzeugen.
+                    $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_PREVIOUS_PAGE, 3, $url));
+					$menu->addKeyItem(new KeyItem(Key::NavLeft,$url));
                 }
-                if($offset<count($xml->phonebook->contact)){
-                    $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"] . "&" . "offset=" .  ($offset+30);
-                    $menu->addSoftKeyItem(new SoftKeyItem('Nächste Seite', 4, $url));
-                    $menu->addKeyItem(new KeyItem(Key::NavRight,$url));
+                if(($offset+30)<count($xml->phonebook->contact)){ // EDIT CB 20131111: offset+30 damit nur weiter gesprungen werden kann, wenn noch Records da sind.
+                    $url = $tmp_url . "&" . "offset=" .  ($offset+30); // EDIT 20131112: Neuen Offset erzeugen.
+                    $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_NEXT_PAGE, 4, $url));
+					$menu->addKeyItem(new KeyItem(Key::NavRight,$url));
                 }
             }
             else{
-                $menu = new CiscoIpPhoneText('Fritzbox Telefonbuch', 'Keine Einträge Vorhanden', 'Das Adressbuch ist leer, oder keine Einträge entsprechen den Suchkriterien');
-                $menu->addSoftKeyItem(new SoftKeyItem('Zurück', 1, 'SoftKey:Back'));
+                $menu = new CiscoIpPhoneText(PB_NAME_GENERAL . ' ' . PB_PHONEBOOK, PB_NO_ENTRIES, PB_NO_ENTRIES_DESC); // EDIT CB 20131111: Text korrigiert
+                $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 1, 'SoftKey:Exit')); // EDIT CB 20131111: Rücksprung korrigiert
             }
         }
         else{
@@ -198,7 +207,7 @@ else{
             unset($get['queryname']);
             unset($get['querynumber']);
             $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
-            $menu = new CiscoIpPhoneInput('Fritzbox Telefonbuch', 'Bitte Namen oder Nummer eingeben', $url);
+            $menu = new CiscoIpPhoneInput(PB_NAME_GENERAL . ' ' . PB_PHONEBOOK, PB_INPUT_QUERY, $url);
             if(isset($_GET['queryname'])){
                 $queryname = $_GET['queryname'];
             }
@@ -212,8 +221,8 @@ else{
                 $querynumber="";
             }
 
-            $menu->addInputItem(new InputItem('Name:', 'queryname', InputFlags::U, $queryname));
-            $menu->addInputItem(new InputItem('Nummer:', 'querynumber', InputFlags::T, $querynumber));
+            $menu->addInputItem(new InputItem(PB_INPUT_NAME, 'queryname', InputFlags::U, $queryname));
+            $menu->addInputItem(new InputItem(PB_INPUT_NUMBER, 'querynumber', InputFlags::T, $querynumber));
         }
     }
     else{
@@ -223,7 +232,7 @@ else{
             $name = substr($xml->phonebook->contact[$id]->person->realName,0,29) . "...";
         }
         if(!isset($_GET["details"])){
-            $menu = new CiscoIpPhoneDirectory('Fritzbox Telefonbuch', $name);
+            $menu = new CiscoIpPhoneDirectory(PB_NAME_GENERAL . ' ' . PB_PHONEBOOK, $name);
             for ($i = 0; $i < count($xml->phonebook->contact[$id]->telephony->number); ++$i){
                 $attributes = $xml->phonebook->contact[$id]->telephony->number[$i]->attributes();
                 $number = preg_replace('/[^0-9+]/', '', $xml->phonebook->contact[$id]->telephony->number[$i]);
@@ -237,19 +246,22 @@ else{
                 }
                 $menu->addDirectoryEntry(new DirectoryEntry($label, $number));
             }
-            $menu->addSoftKeyItem(new SoftKeyItem('Zurück', 1, 'SoftKey:Back'));
-            $menu->addSoftKeyItem(new SoftKeyItem('Wählen', 2, 'SoftKey:Dial'));
+			$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_DIAL, 1, 'SoftKey:Dial')); // EDIT CB 20131111: Tasten getauscht, SoftKey: Back ersetzt
+			$get = $_GET;
+            unset($get['id']);
+            $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
+            $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 2, $url));
             $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"] . "&" . "details";
-            $menu->addSoftKeyItem(new SoftKeyItem('Details', 4, $url));
+            $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_DETAILS, 4, $url));
         }
         else{
-            $text = 'Keine weiteren Informationen';
+            $text = PB_NO_FURTHER_INFORMATION;
             if(count($xml->phonebook->contact[$id]->services->email)){
-                $text = "Email:\n";
+                $text = PB_FIELD_EMAIL . ":\n";
                 for ($i = 0; $i < count($xml->phonebook->contact[$id]->services->email); ++$i){
                     $attributes = $xml->phonebook->contact[$id]->services->email[$i]->attributes();
                     $type = (string) $attributes["classifier"];
-                    $label = "Sonstige";
+                    $label = PB_FIELD_OTHER;
                     if(array_key_exists($type, $translation)){
                         $label = $translation[$type];
                     }
@@ -260,8 +272,11 @@ else{
                     $text.=$xml->phonebook->contact[$id]->services->email[$i]."\n";
                 }
             }
-            $menu = new CiscoIpPhoneText('Fritzbox Telefonbuch', $name, $text);
-            $menu->addSoftKeyItem(new SoftKeyItem('Zurück', 1, 'SoftKey:Back'));
+            $menu = new CiscoIpPhoneText(PB_NAME_GENERAL . ' ' . PB_PHONEBOOK, $name, $text);
+			$get = $_GET;
+            unset($get['details']);
+            $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
+            $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 2, 'SoftKey:Exit')); // EDIT CB 20131111: Tasten getauscht, SoftKey: Back ersetzt
         }
     }
 }
