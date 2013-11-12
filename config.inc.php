@@ -7,4 +7,7 @@
 
     $fritzbox_ip = 'fritz.box'; //Hier die IP oder den Hostname der FritzBox eintragen (meist fritz.box)
     $fritzbox_password    = 'geheim'; //Hier das Passwort eintragen
+    $show_MissedCalls = true;
+    $show_ReceivedCalls = true;
+    $show_PlacedCalls = true;
 ?>
