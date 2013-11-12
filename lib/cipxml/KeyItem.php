@@ -24,8 +24,10 @@ final class Key {
     const NavSelect = 17;
     const NavBack = 18;
     const PushToTalk = 19;
+    const Applications = 20;
+    const Contacts = 21;
     
-    const _max = Key::PushToTalk;
+    const _max = Key::Contacts;
     
     public static function string($key){
         switch($key){
@@ -48,6 +50,8 @@ final class Key {
             case Key::NavSelect: return 'NavSelect';
             case Key::NavBack: return 'NavBack';
             case Key::PushToTalk: return 'PushToTalk';
+            case Key::Applications: return 'Applications';
+            case Key::Contacts: return 'Contacts';
         }
     }
 }

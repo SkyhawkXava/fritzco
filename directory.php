@@ -17,6 +17,8 @@ use cipxml\InputItem;
 use cipxml\InputFlags;
 use cipxml\MenuItem;
 use cipxml\SoftKeyItem;
+use cipxml\KeyItem;
+use cipxml\Key;
 
 header("Content-type: text/xml");
 
@@ -95,6 +97,16 @@ if(!isset($_GET["book"]))
                $menu->addMenuItem(new MenuItem($name, $url));
             }
         }
+        if($show_MissedCalls){
+            $menu->addMenuItem(new MenuItem('Anrufe in Abwesenheit', 'Application:Cisco/MissedCalls'));
+        }
+        if($show_ReceivedCalls){
+            $menu->addMenuItem(new MenuItem('Angenommene Anrufe', 'Application:Cisco/ReceivedCalls'));
+        }
+        if($show_MissedCalls){
+            $menu->addMenuItem(new MenuItem('Ausgehende Anrufe', 'Application:Cisco/PlacedCalls'));
+        }
+        
         $menu->addSoftKeyItem(new SoftKeyItem('Verlassen', 1, 'SoftKey:Exit'));
         $menu->addSoftKeyItem(new SoftKeyItem('Auswählen', 2, 'SoftKey:Select'));
         $url = 'http://' . $_SERVER['SERVER_NAME'] .  $_SERVER['PHP_SELF'] .  '?refresh';
@@ -141,13 +153,12 @@ else{
 
     if(!isset($_GET["id"])){
         if(!isset($_GET["search"])){
-            header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
+            //header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
             $offset = 0;
             if(isset($_GET["offset"])){
                 $offset = (int) $_GET["offset"];
             }
             $attributes = $xml->phonebook->attributes();
-            header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
            
             if(count($xml->phonebook->contact)>0){
                 $menu = new CiscoIpPhoneMenu('Fritzbox Telefonbuch', $attributes['name']); 
@@ -168,10 +179,12 @@ else{
                     }
                     $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"] . "&" . "offset=" .  $newoffset;
                     $menu->addSoftKeyItem(new SoftKeyItem('Vorherige Seite', 3, $url));
+                    $menu->addKeyItem(new KeyItem(Key::NavLeft,$url));
                 }
                 if($offset<count($xml->phonebook->contact)){
                     $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"] . "&" . "offset=" .  ($offset+30);
                     $menu->addSoftKeyItem(new SoftKeyItem('Nächste Seite', 4, $url));
+                    $menu->addKeyItem(new KeyItem(Key::NavRight,$url));
                 }
             }
             else{
