@@ -175,7 +175,7 @@ else{
                 $menu = new CiscoIpPhoneMenu(PB_NAME_GENERAL . ' ' . PB_PHONEBOOK, $attributes['name']);
                 for ($i = $offset; $i < count($xml->phonebook->contact) && $i<$offset+30; ++$i){ 
                     $name = $xml->phonebook->contact[$i]->person->realName;
-                    $url = "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "&amp;" . "id=" . $i;
+                    $url = "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "&id=" . $i;
                     $menu->addMenuItem(new MenuItem($name, $url));
                 }
                 $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_SELECT, 1, 'SoftKey:Select'));
@@ -193,12 +193,12 @@ else{
                     if($newoffset<0){
                         $newoffset=0;
                     }
-                    $url = $tmp_url . "&amp;offset=" .  $newoffset;
+                    $url = $tmp_url . "&offset=" .  $newoffset;
                     $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_PREVIOUS_PAGE, 3, $url));
 					$menu->addKeyItem(new KeyItem(Key::NavLeft,$url));
                 }
                 if(($offset+30)<count($xml->phonebook->contact)){
-                    $url = $tmp_url . "&amp;offset=" .  ($offset+30);
+                    $url = $tmp_url . "&offset=" .  ($offset+30);
                     $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_NEXT_PAGE, 4, $url));
 					$menu->addKeyItem(new KeyItem(Key::NavRight,$url));
                 }
@@ -258,7 +258,7 @@ else{
             unset($get['id']);
             $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
             $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 2, $url));
-            $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"] . "&amp;" . "details";
+            $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"] . "&" . "details";
             $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_DETAILS, 4, $url));
         }
         else{
