@@ -90,7 +90,7 @@ if(isset($_GET["refresh"])) {
 }
 
 $has_books = false;
-if(!isset($_GET["book"]))
+if(!isset($_GET["book"]) && ($show_BookSelection))
 {
     foreach(scandir("books") as $book){
         if(is_file("books/$book") && strpos($book,'.xml') !== false){
@@ -140,7 +140,13 @@ if(!isset($_GET["book"]))
     }
 }
 else{
-    $input = file_get_contents("books/".$_GET["book"]);
+    if (isset($_GET["book"])) {
+	  $tmp_book = $_GET["book"];
+	} else {
+	  $tmp_book = strval($telefonbuch-1) . ".xml";
+	}
+	
+    $input = file_get_contents("books/".$tmp_book);
     $xml = simplexml_load_string($input);
 
     if(isset($_GET["queryname"]) && strlen($_GET["queryname"])){
