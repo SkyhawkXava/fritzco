@@ -72,7 +72,7 @@ switch ($getCommand) {
 die;
 
 function cmd_search ($getUser, $getPass, $getIP) {
-    $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . "?cmd=dial&amp;uid=" . $getUser . "&amp;pwd=" . $getPass . "&amp;";
+    $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . htmlentities("?cmd=dial&uid=" . urlencode($getUser) . "&pwd=" . urlencode($getPass));
     $menu = new CiscoIpPhoneInput(SERV_TITLE_DIAL, SERV_INPUT_QUERY, $url);
     $menu->addInputItem(new InputItem(SERV_INPUT_TARGET, 'ip', InputFlags::E, $getIP));
     $menu->addInputItem(new InputItem(SERV_INPUT_NUMBER, 'dta', InputFlags::T, ''));
@@ -82,8 +82,8 @@ function cmd_search ($getUser, $getPass, $getIP) {
 function cmd_default ($default_uid, $default_pass, $default_ip) {
 
         $menu = new CiscoIpPhoneMenu(SERV_SERVICES_TITLE, SERV_PLEASE_CHOOSE);
-        $menu->addMenuItem(new MenuItem(SERV_REBOOT_PHONE, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "?cmd=reboot&amp;uid=" . $default_uid . "&amp;pwd=" . $default_pass . "&amp;ip=" . $default_ip));
-		$menu->addMenuItem(new MenuItem(SERV_TESTCALL, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "?cmd=search&amp;uid=" . $default_uid . "&amp;pwd=" . $default_pass . "&amp;ip=" . $default_ip));
+        $menu->addMenuItem(new MenuItem(SERV_REBOOT_PHONE, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . htmlentities("?cmd=reboot&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip))));
+		$menu->addMenuItem(new MenuItem(SERV_TESTCALL, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . htmlentities("?cmd=search&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip))));
 		$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_SELECT, 1, 'SoftKey:Select'));
 		$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_EXIT, 2, 'SoftKey:Exit'));
 
