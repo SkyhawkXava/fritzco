@@ -1,4 +1,4 @@
-<?
+<?php
 /*
  * @author Christian Bartsch <cb AT dreinulldrei DOT de>
  * @portions Till Steinbach <till.steinbach@gmx.de>, Dave Gibbons <dave@dave.vc>
@@ -56,10 +56,10 @@ if (empty($getIP)) {
 
 switch ($getCommand) {
     case 'reboot':
-        cmd_reboot($getUser, $getPass, $getIP);
+        cmd_reboot($getUser, $getPass, $getIP, $getData);
         break;
-	case 'search':
-        cmd_search($getUser, $getPass, $getIP);
+	case 'idial':
+        cmd_inputdial($getUser, $getPass, $getIP);
         break;
     case 'dial':
         cmd_dial($getUser, $getPass, $getIP, $getData);
@@ -71,35 +71,48 @@ switch ($getCommand) {
 
 die;
 
-function cmd_search ($getUser, $getPass, $getIP) {
+function cmd_inputdial ($getUser, $getPass, $getIP) {
+
     $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . htmlentities("?cmd=dial&uid=" . urlencode($getUser) . "&pwd=" . urlencode($getPass));
     $menu = new CiscoIpPhoneInput(SERV_TITLE_DIAL, SERV_INPUT_QUERY, $url);
     $menu->addInputItem(new InputItem(SERV_INPUT_TARGET, 'ip', InputFlags::E, $getIP));
     $menu->addInputItem(new InputItem(SERV_INPUT_NUMBER, 'dta', InputFlags::T, ''));
 	echo (string) $menu;
+
 }
 
 function cmd_default ($default_uid, $default_pass, $default_ip) {
 
-        $menu = new CiscoIpPhoneMenu(SERV_SERVICES_TITLE, SERV_PLEASE_CHOOSE);
-        $menu->addMenuItem(new MenuItem(SERV_REBOOT_PHONE, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . htmlentities("?cmd=reboot&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip))));
-		$menu->addMenuItem(new MenuItem(SERV_TESTCALL, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . htmlentities("?cmd=search&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip))));
-		$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_SELECT, 1, 'SoftKey:Select'));
-		$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_EXIT, 2, 'SoftKey:Exit'));
+    $menu = new CiscoIpPhoneMenu(SERV_SERVICES_TITLE, SERV_PLEASE_CHOOSE);
+    $menu->addMenuItem(new MenuItem(SERV_REBOOT_PHONE, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . htmlentities("?cmd=reboot&dta=79xx&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip))));
+	$menu->addMenuItem(new MenuItem(SERV_TESTCALL, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . htmlentities("?cmd=idial&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip))));
+	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_SELECT, 1, 'SoftKey:Select'));
+	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_EXIT, 2, 'SoftKey:Exit'));
 
 	echo (string) $menu;
 	
 	return TRUE;
 }
 
-// reboot phone with SETTINGS & **#**
-function cmd_reboot ($getUser, $getPass, $getIP) {
-	$command[0] = array(0 => "Key:Settings", 1 => "1");
-	$command[1] = array(0 => "Key:KeyPadStar", 1 => ".1");
-	$command[2] = array(0 => "Key:KeyPadStar", 1 => ".1");
-	$command[3] = array(0 => "Key:KeyPadPound", 1 => ".1");
-	$command[4] = array(0 => "Key:KeyPadStar", 1 => ".1");
-	$command[5] = array(0 => "Key:KeyPadStar", 1 => ".1");
+// reboot phone
+function cmd_reboot ($getUser, $getPass, $getIP, $getData) {
+	switch (strtolower($getData)) {
+		case '99xx' : // set dta=99xx for 99xx reset command
+			$command[0] = array(0 => "Key:Applications", 1 => "1");
+			$command[1] = array(0 => "Key:KeyPad4", 1 => ".2");
+			$command[2] = array(0 => "Key:KeyPad4", 1 => ".2");
+			$command[3] = array(0 => "Key:KeyPad1", 1 => ".2");
+			$command[4] = array(0 => "Key:Soft3", 1 => ".2");
+			break;
+		default: // use 79xx command in all other cases
+			$command[0] = array(0 => "Key:Settings", 1 => "1");
+			$command[1] = array(0 => "Key:KeyPadStar", 1 => ".2");
+			$command[2] = array(0 => "Key:KeyPadStar", 1 => ".2");
+			$command[3] = array(0 => "Key:KeyPadPound", 1 => ".2");
+			$command[4] = array(0 => "Key:KeyPadStar", 1 => ".2");
+			$command[5] = array(0 => "Key:KeyPadStar", 1 => ".2");
+			break;
+	}
 	
 	$response = '';
 	
@@ -118,6 +131,7 @@ function cmd_reboot ($getUser, $getPass, $getIP) {
 // dial; dial number on remote phone, $getData must be numeric longint only
 function cmd_dial ($getUser, $getPass, $getIP, $getData) {
 	$number = strval($getData);
+	sleep (0.5);
 	$response = push2phone($getIP,"Key:Speaker" ,$getUser,$getPass);
 	sleep (0.5);
 
@@ -134,12 +148,8 @@ function cmd_dial ($getUser, $getPass, $getIP, $getData) {
  
 }
 
-
-
-/* this is the function that does all of the dirty work. */
-/* from http://www.voip-info.org/wiki-Cisco+79XX+XML+Push */
-
-
+/* this is the function that does all of the dirty work.
+from http://www.voip-info.org/wiki-Cisco+79XX+XML+Push */
 function push2phone($ip, $uri, $uid, $pwd){
   $auth = base64_encode($uid.":".$pwd);
   $xml  = "<CiscoIPPhoneExecute><ExecuteItem Priority=\"0\" URL=\"".$uri."\"/></CiscoIPPhoneExecute>";
