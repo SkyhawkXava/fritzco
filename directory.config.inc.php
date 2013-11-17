@@ -12,6 +12,7 @@
     $show_ReceivedCalls = false;
     $show_PlacedCalls = false;
 	
+	$show_BookSelection = false; // erlaubt keinen Rücksprung zur Telefonbuchauswahl (sinnvoll, wenn nur ein Telefonbuch vorhanden)
 	$show_QuickDial = true;
 	define ('QUICKDIAL_URL', 'http://intrasrv.fritz.box/cisco/quickdial.php'); // Pfad zu separatem Telefonbuch mit eigenen, festen internen Nummern.
 	define ('QUICKDIAL_NAME', 'Kurzwahlen');
