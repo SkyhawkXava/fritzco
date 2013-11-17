@@ -1,4 +1,4 @@
-<?
+<?php
 /*
  * @author Christian Bartsch <cb AT dreinulldrei DOT de>
  * @copyright (c) Christian Bartsch
