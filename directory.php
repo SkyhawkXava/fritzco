@@ -93,13 +93,14 @@ if(isset($_GET["refresh"])) {
 }
 
 $has_books = false;
-if(!isset($_GET["book"]) && ($show_BookSelection))
-{
-    foreach(scandir("books") as $book){
-        if(is_file("books/$book") && strpos($book,'.xml') !== false){
-            $has_books=true;
-        }
+foreach(scandir("books") as $book){
+    if(is_file("books/$book") && strpos($book,'.xml') !== false){
+        $has_books=true;
     }
+}
+
+if((!isset($_GET["book"]) && ($show_BookSelection)) or (!$has_books))
+{
     if($has_books){
         $menu = new CiscoIpPhoneMenu(PB_PHONEBOOKS, PB_SELECT_PHONEBOOK);
 		
@@ -192,7 +193,9 @@ else{
                 $menu = new CiscoIpPhoneMenu(PB_NAME_GENERAL . ' ' . PB_PHONEBOOK, $attributes['name']);
                 for ($i = $offset; $i < count($xml->phonebook->contact) && $i<$offset+30; ++$i){ 
                     $name = $xml->phonebook->contact[$i]->person->realName;
-                    $url = "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "&id=" . $i;
+					$get = $_GET;
+					unset($get['refresh']);
+					$url = "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["PHP_SELF"] . '?' . http_build_query($get) . "&id=" . $i;
                     $menu->addMenuItem(new MenuItem($name, $url));
                 }
                 $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_SELECT, 1, 'SoftKey:Select'));
@@ -204,11 +207,11 @@ else{
 				    $url = 'http://' . $_SERVER['SERVER_NAME'] .  $_SERVER['PHP_SELF'] .  '?refresh';
 					$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_REFRESH, 2, $url));
 				}
-
-                $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query(array_merge($_GET,array("search"=>true)));
+				$get = $_GET;
+				unset($get['refresh']);
+                $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query(array_merge($get,array("search"=>true)));
                 $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_SEARCH, 3, $url));
  
-				$get = $_GET;
 				unset($get['offset']);
 				$tmp_url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
  
@@ -234,6 +237,7 @@ else{
         }
         else{
             $get = $_GET;
+			unset($get['refresh']);
             unset($get['search']);
             unset($get['queryname']);
             unset($get['querynumber']);
@@ -279,11 +283,13 @@ else{
             }
 			$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_DIAL, 1, 'SoftKey:Dial'));
 			$get = $_GET;
-            unset($get['id']);
+			unset($get['refresh']);
+			$url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get) . "&details";
+            $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_DETAILS, 4, $url));
+			unset($get['id']);
             $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
             $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 2, $url));
-            $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"] . "&" . "details";
-            $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_DETAILS, 4, $url));
+
         }
         else{
             $text = PB_NO_FURTHER_INFORMATION;
@@ -305,6 +311,7 @@ else{
             }
             $menu = new CiscoIpPhoneText(PB_NAME_GENERAL . ' ' . PB_PHONEBOOK, $name, $text);
 			$get = $_GET;
+			unset($get['refresh']);
             unset($get['details']);
             // $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
             $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 2, 'SoftKey:Exit'));
