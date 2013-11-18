@@ -58,31 +58,34 @@ if(isset($_GET["refresh"])) {
 				unlink("books/$book");
 			}
 		}
+		
+		$tmp_telefonbuch = $telefonbuch;
+		
 		do {
 			curl_setopt($ch, CURLOPT_URL, $fritzbox_cfg);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, array("sid" => $SID, "PhonebookId" => $telefonbuch, "PhonebookExportName" => "Telefonbuch", "PhonebookExport" => ""));
+			curl_setopt($ch, CURLOPT_POSTFIELDS, array("sid" => $SID, "PhonebookId" => $tmp_telefonbuch, "PhonebookExportName" => "Telefonbuch", "PhonebookExport" => ""));
 			$book = curl_exec($ch);
 			$xml = simplexml_load_string($book);
 			if(!$xml->phonebook) {
 				break;
 			}
-			file_put_contents("books/$telefonbuch.xml",$book, LOCK_EX);
-			$telefonbuch++;
+			file_put_contents("books/$tmp_telefonbuch.xml",$book, LOCK_EX);
+			$tmp_telefonbuch++;
 		} while (true);
 		
 		curl_close($ch);
 
 	} else {
 		do { // for Fritzboxes with webserver -> direct copy
-			shell_exec("pbd --exportbook " . $telefonbuch);
-			// shell_exec("cat /tmp/pbd.export > " . FRITZBOX_LOCAL_PATH . $telefonbuch . ".xml");
-			// if (!file_exists(FRITZBOX_LOCAL_PATH . $telefonbuch . ".xml")) {
+			shell_exec("pbd --exportbook " . $tmp_telefonbuch);
+			// shell_exec("cat /tmp/pbd.export > " . FRITZBOX_LOCAL_PATH . $tmp_telefonbuch . ".xml");
+			// if (!file_exists(FRITZBOX_LOCAL_PATH . $tmp_telefonbuch . ".xml")) {
 			//	break;
 			// }
-			if (!copy("/tmp/pbd.export", FRITZBOX_LOCAL_PATH . $telefonbuch . ".xml")) {
+			if (!copy("/tmp/pbd.export", FRITZBOX_LOCAL_PATH . $tmp_telefonbuch . ".xml")) {
 				break;
 			}
-			$telefonbuch++;
+			$tmp_telefonbuch++;
 		} while (true);
 	}
 	
@@ -143,7 +146,7 @@ else{
     if (isset($_GET["book"])) {
 	  $tmp_book = $_GET["book"];
 	} else {
-	  $tmp_book = strval($telefonbuch-1) . ".xml";
+	  $tmp_book = "$telefonbuch.xml";
 	}
 	
     $input = file_get_contents("books/".$tmp_book);
