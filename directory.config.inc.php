@@ -8,7 +8,10 @@
 
     $fritzbox_ip = 'fritz.box'; //Hier die IP oder den Hostname der FritzBox eintragen (meist fritz.box)
     $fritzbox_password    = 'secret'; //Hier das Passwort eintragen
-	  $show_MissedCalls = false;
+    
+    $telefonbuch = 0; // Auswahl des erste Telefonbuchs, erstes Telefonbuch ist 0, nicht 1.
+    
+    $show_MissedCalls = false;
     $show_ReceivedCalls = false;
     $show_PlacedCalls = false;
 	
