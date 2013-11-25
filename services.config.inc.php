@@ -9,5 +9,6 @@
 $default_uid = 'cisco';
 $default_pass = 'phone';
 $default_ip = '192.168.1.20';
+$usehttps = false;
 		
 ?>
