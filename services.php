@@ -1,10 +1,10 @@
 <?php
 /*
  * @author Christian Bartsch <cb AT dreinulldrei DOT de>
- * @portions Till Steinbach <till.steinbach@gmx.de>, Dave Gibbons <dave@dave.vc>
- * @copyright (c) Christian Bartsch, Till Steinbach, Dave Gibbons
+ * @portions Till Steinbach <till.steinbach@gmx.de>
+ * @copyright (c) Christian Bartsch, Till Steinbach
  * @license GPL v2
- * @date 2013-11-17
+ * @date 2013-11-25
  *
  * services.php displays pre-configured menu; otherwise create your own and run with parameters:
  * services.php?ip=192.168.1.20&amp;uid=user&amp;pass=secret&amp;cmd=dial&amp;dta=0123456789
@@ -16,11 +16,12 @@ require_once 'services.config.inc.php';
 require_once 'services.locale.german.inc.php';
 require_once __DIR__ . '/lib/cipxml/cipxml.php';
 
-use cipxml\CiscoIPPhoneDirectory;
+use cipxml\CiscoIPPhoneExecute;
 use cipxml\CiscoIPPhoneMenu;
 use cipxml\CiscoIPPhoneText;
 use cipxml\CiscoIPPhoneInput;
-use cipxml\DirectoryEntry;
+// use cipxml\DirectoryEntry;
+use cipxml\ExecuteItem;
 use cipxml\InputItem;
 use cipxml\InputFlags;
 use cipxml\MenuItem;
@@ -56,13 +57,13 @@ if (empty($getIP)) {
 
 switch ($getCommand) {
     case 'reboot':
-        cmd_reboot($getUser, $getPass, $getIP, $getData);
+        cmd_reboot($getUser, $getPass, $getIP, $getData, $usehttps);
         break;
 	case 'idial':
         cmd_inputdial($getUser, $getPass, $getIP);
         break;
     case 'dial':
-        cmd_dial($getUser, $getPass, $getIP, $getData);
+        cmd_dial($getUser, $getPass, $getIP, $getData, $usehttps);
         break;
 	default:
 		cmd_default ($default_uid, $default_pass, $default_ip);
@@ -95,7 +96,7 @@ function cmd_default ($default_uid, $default_pass, $default_ip) {
 }
 
 // reboot phone
-function cmd_reboot ($getUser, $getPass, $getIP, $getData) {
+function cmd_reboot ($getUser, $getPass, $getIP, $getData, $usehttps) {
 	switch (strtolower($getData)) {
 		case '99xx' : // set dta=99xx for 99xx reset command
 			$command[0] = array(0 => "Key:Applications", 1 => "1");
@@ -114,13 +115,13 @@ function cmd_reboot ($getUser, $getPass, $getIP, $getData) {
 			break;
 	}
 	
-	$response = '';
-	
 	for ($i = 0; $i <= (count($command)-1); $i++) {
-		$response = push2phone($getIP,$command[$i][0],$getUser,$getPass);
-		sleep (0.1);
+		$execute = new CiscoIPPhoneExecute;
+		$execute->addExecuteItem(new ExecuteItem($command[$i][0], 0));
+		$response = $execute->execute($getIP, $getUser, $getPass, $usehttps);
+		sleep ($command[$i][1]);
 	}
-	
+
 	$menu = new CiscoIpPhoneText(SERV_TITLE_REBOOT, SERV_STATUS_REBOOT . " " . $getIP, $response);
     $menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_BACK, 2, 'SoftKey:Exit'));
 	echo (string) $menu;
@@ -129,54 +130,19 @@ function cmd_reboot ($getUser, $getPass, $getIP, $getData) {
 }
 
 // dial; dial number on remote phone, $getData must be numeric longint only
-function cmd_dial ($getUser, $getPass, $getIP, $getData) {
+function cmd_dial ($getUser, $getPass, $getIP, $getData, $usehttps) {
 	$number = strval($getData);
-	sleep (0.5);
-	$response = push2phone($getIP,"Key:Speaker" ,$getUser,$getPass);
-	sleep (0.5);
 
-	for ($i = 0; $i <= (strlen($number)); $i++) {
-		$response = push2phone($getIP,"Key:KeyPad" . $number[$i],$getUser,$getPass);
-		sleep (0.2);
-		}
+	$execute = new CiscoIPPhoneExecute;
+	$execute->addExecuteItem(new ExecuteItem("Key:Speaker", 0));
+	$execute->addExecuteItem(new ExecuteItem("Dial:" . $number, 0));
+	$response = $execute->execute($getIP, $getUser, $getPass, $usehttps);
 	
 	$menu = new CiscoIpPhoneText(SERV_TITLE_DIAL, SERV_STATUS_NUMBERSENT, $response);
 	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_BACK, 2, 'SoftKey:Exit'));
 	echo (string) $menu;
 	
 	return TRUE;
- 
-}
+ }
 
-/* this is the function that does all of the dirty work.
-from http://www.voip-info.org/wiki-Cisco+79XX+XML+Push */
-function push2phone($ip, $uri, $uid, $pwd){
-  $auth = base64_encode($uid.":".$pwd);
-  $xml  = "<CiscoIPPhoneExecute><ExecuteItem Priority=\"0\" URL=\"".$uri."\"/></CiscoIPPhoneExecute>";
-  // $response = $xml."\n";
-  $xml  = "XML=".urlencode($xml);
-  
-  $post  = "POST /CGI/Execute HTTP/1.0\r\n";
-  $post .= "Host: $ip\r\n";
-  $post .= "Authorization: Basic $auth\r\n";
-  $post .= "Connection: close\r\n";
-  $post .= "Content-Type: application/x-www-form-urlencoded\r\n";
-  $post .= "Content-Length: ".strlen($xml)."\r\n\r\n";
-  
-  $response = '';
-  
-  $fp = fsockopen ($ip, 80, $errno, $errstr, 10);
-  if(!$fp){ $response.= "$errstr ($errno)\n"; }
-  else
-  {
-    fputs($fp, $post.$xml);
-    flush();
-    while (!feof($fp))
-    {
-     $response .= fgets($fp, 128);
-     flush();
-    }
-  }
-  return $response;
-}
 ?>
