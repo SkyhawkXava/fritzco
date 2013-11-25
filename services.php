@@ -60,10 +60,16 @@ switch ($getCommand) {
         cmd_reboot($getUser, $getPass, $getIP, $getData, $usehttps);
         break;
 	case 'idial':
-        cmd_inputdial($getUser, $getPass, $getIP);
+        cmd_input_dial($getUser, $getPass, $getIP);
         break;
     case 'dial':
         cmd_dial($getUser, $getPass, $getIP, $getData, $usehttps);
+        break;
+    case 'display':
+        cmd_display($getUser, $getPass, $getIP, $getData, $usehttps);
+		break;
+    case 'idisplay':
+        cmd_input_display($getUser, $getPass, $getIP, $getData);
         break;
 	default:
 		cmd_default ($default_uid, $default_pass, $default_ip);
@@ -72,9 +78,9 @@ switch ($getCommand) {
 
 die;
 
-function cmd_inputdial ($getUser, $getPass, $getIP) {
+function cmd_input_dial ($getUser, $getPass, $getIP) {
 
-    $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . htmlentities("?cmd=dial&uid=" . urlencode($getUser) . "&pwd=" . urlencode($getPass));
+    $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . "?cmd=dial&uid=" . urlencode($getUser) . "&pwd=" . urlencode($getPass);
     $menu = new CiscoIpPhoneInput(SERV_TITLE_DIAL, SERV_INPUT_QUERY, $url);
     $menu->addInputItem(new InputItem(SERV_INPUT_TARGET, 'ip', InputFlags::E, $getIP));
     $menu->addInputItem(new InputItem(SERV_INPUT_NUMBER, 'dta', InputFlags::T, ''));
@@ -82,13 +88,26 @@ function cmd_inputdial ($getUser, $getPass, $getIP) {
 
 }
 
+function cmd_input_display ($getUser, $getPass, $getIP) {
+
+    $menu = new CiscoIpPhoneMenu(SERV_TITLE_DISPLAY, SERV_STATUS_DISPLAY_TOGGLE);
+	$menu->addMenuItem(new MenuItem(SERV_TITLE_DISPLAY . " " . SERV_BUTTON_ON, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["PHP_SELF"] ."?cmd=display&dta=1&uid=" . urlencode($getUser) . "&pwd=" . urlencode($getPass) . "&ip=" . urlencode($getIP)));
+	$menu->addMenuItem(new MenuItem(SERV_TITLE_DISPLAY . " " . SERV_BUTTON_OFF, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["PHP_SELF"] . "?cmd=display&dta=0&uid=" . urlencode($getUser) . "&pwd=" . urlencode($getPass) . "&ip=" . urlencode($getIP)));
+	$menu->addMenuItem(new MenuItem(SERV_TITLE_DISPLAY . " " . SERV_BUTTON_STANDARD, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["PHP_SELF"] . "?cmd=display&dta=2&uid=" . urlencode($getUser) . "&pwd=" . urlencode($getPass) . "&ip=" . urlencode($getIP)));
+	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_SELECT, 1, 'SoftKey:Select'));
+	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_EXIT, 3, 'SoftKey:Exit'));
+	echo (string) $menu;
+
+}
+
 function cmd_default ($default_uid, $default_pass, $default_ip) {
 
     $menu = new CiscoIpPhoneMenu(SERV_SERVICES_TITLE, SERV_PLEASE_CHOOSE);
-    $menu->addMenuItem(new MenuItem(SERV_REBOOT_PHONE, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . htmlentities("?cmd=reboot&dta=79xx&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip))));
-	$menu->addMenuItem(new MenuItem(SERV_TESTCALL, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . htmlentities("?cmd=idial&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip))));
+    $menu->addMenuItem(new MenuItem(SERV_TITLE_DISPLAY, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "?cmd=idisplay&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip)));
+    $menu->addMenuItem(new MenuItem(SERV_REBOOT_PHONE, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "?cmd=reboot&dta=79xx&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip)));
+	$menu->addMenuItem(new MenuItem(SERV_TESTCALL, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "?cmd=idial&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip)));
 	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_SELECT, 1, 'SoftKey:Select'));
-	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_EXIT, 2, 'SoftKey:Exit'));
+	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_EXIT, 3, 'SoftKey:Exit'));
 
 	echo (string) $menu;
 	
@@ -123,7 +142,7 @@ function cmd_reboot ($getUser, $getPass, $getIP, $getData, $usehttps) {
 	}
 
 	$menu = new CiscoIpPhoneText(SERV_TITLE_REBOOT, SERV_STATUS_REBOOT . " " . $getIP, $response);
-    $menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_BACK, 2, 'SoftKey:Exit'));
+    $menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_BACK, 3, 'SoftKey:Exit'));
 	echo (string) $menu;
 	
 	return TRUE;
@@ -134,15 +153,47 @@ function cmd_dial ($getUser, $getPass, $getIP, $getData, $usehttps) {
 	$number = strval($getData);
 
 	$execute = new CiscoIPPhoneExecute;
-	$execute->addExecuteItem(new ExecuteItem("Key:Speaker", 0));
+	// $execute->addExecuteItem(new ExecuteItem("Key:Speaker", 0));
 	$execute->addExecuteItem(new ExecuteItem("Dial:" . $number, 0));
 	$response = $execute->execute($getIP, $getUser, $getPass, $usehttps);
 	
 	$menu = new CiscoIpPhoneText(SERV_TITLE_DIAL, SERV_STATUS_NUMBERSENT, $response);
-	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_BACK, 2, 'SoftKey:Exit'));
+	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_BACK, 3, 'SoftKey:Exit'));
 	echo (string) $menu;
 	
 	return TRUE;
  }
 
+ // dial; dial number on remote phone, $getData must be numeric longint only
+function cmd_display ($getUser, $getPass, $getIP, $getData, $usehttps) {
+	$number = intval($getData);
+	// 0 = off, 1 = on, 2 = default
+
+	$execute = new CiscoIPPhoneExecute;
+	
+	Switch ($number) {
+		Case '0' :
+			$execute->addExecuteItem(new ExecuteItem("Init:Services", 0));
+			$display_state = 'Off:0';
+			$display_state_msg = SERV_STATUS_DISPLAY_OFF;
+			break;
+		Case '1' :
+			$display_state = 'On:0';
+			$display_state_msg = SERV_STATUS_DISPLAY_ON;
+			break;
+		Default :
+			$display_state = 'Default';
+			$display_state_msg = SERV_STATUS_DISPLAY_DEFAULT;
+			break;
+	}
+	
+	$execute->addExecuteItem(new ExecuteItem("Display:$display_state", 0));
+	$response = $execute->execute($getIP, $getUser, $getPass, $usehttps);
+	
+	$menu = new CiscoIpPhoneText(SERV_TITLE_DISPLAY, $display_state_msg, $response);
+	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_BACK, 3, 'SoftKey:Exit'));
+	echo (string) $menu;
+	
+	return TRUE;
+ }
 ?>
