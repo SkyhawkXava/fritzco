@@ -6,6 +6,7 @@ interface IContact
 {
     public function getDisplayName();
     public function getNumbers();
+    public function getEmails();
 }
 
 ?>

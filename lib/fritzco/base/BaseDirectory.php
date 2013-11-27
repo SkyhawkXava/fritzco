@@ -7,15 +7,23 @@ use fritzco\interfaces\IContact;
 
 class BaseDirectory implements IDirectory
 {
+    private $id=NULL;
+    private $name;
     private $contacts = array();
     private $priority = 0;
 
-    public static function getDirectories(){
-        return null;
+    function __construct($id) {
+        $this->id = $id;
     }
-    public static function getDirectory($id){
-        return null;
+
+    public function getName(){
+        return $this->name;
     }
+    
+    public function setName($name){
+        $this->name = $name;
+    }
+
     public function getContacts(){
         return $this->contacts;
     }

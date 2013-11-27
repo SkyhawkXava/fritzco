@@ -16,7 +16,7 @@ class Directories extends BaseDirectories{
     function __construct($fritzbox_ip, $fritzbox_password) {
         $this->fritzbox_ip = $fritzbox_ip;
         $this->fritzbox_password = $fritzbox_password;
-   }
+    }
     
     public function refreshCache(){
         $fritzbox_cfg = 'http://' . $this->fritzbox_ip . '/cgi-bin/firmwarecfg';
@@ -48,7 +48,7 @@ class Directories extends BaseDirectories{
 				    break;
 			    }
 			    else{
-			        $directory = Directory::fromXML($xml);
+			        $directory = Directory::fromXML($xml, $telefonbuch);
 			        $this->addDirectory($directory);
 			    }
 			    $telefonbuch++;

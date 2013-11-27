@@ -1,6 +1,6 @@
 <?php
 
-namespace fritzco;
+namespace fritzco\interfaces;
 
 interface INumber
 {
