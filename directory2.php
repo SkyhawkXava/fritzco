@@ -10,21 +10,21 @@
 
 require_once __DIR__ . '/lib/cipxml/cipxml.php';
 
-use fritzco\plugins\fritz\Directories;
+
+use fritzco\applications\DirectoriesApplication;
+
 
 $start = microtime(true);
 
-$directories = Directories::getDirectories();
+$app = new DirectoriesApplication();
+$app->handle();
 
-echo "took: " . (microtime(true) - $start) . "seconds to deserialize";
 
-if(isset($_GET["refresh"])){
-    $directories->refreshCache();
-}
+echo (string) $app;
 
-print_r($directories);
 
-echo "took: " . (microtime(true) - $start) . "seconds total";
+
+echo "<!-- took: " . (microtime(true) - $start) . "seconds total-->";
 
 ?>
 

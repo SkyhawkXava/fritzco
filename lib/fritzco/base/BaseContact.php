@@ -15,6 +15,10 @@ class BaseContact implements IContact
         $this->id = $id;
     }
     
+    public function getId(){
+        return $this->id;
+    }
+    
     public function getDisplayName(){
         return $this->displayName;
     }

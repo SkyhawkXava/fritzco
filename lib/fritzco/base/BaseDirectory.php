@@ -16,6 +16,10 @@ class BaseDirectory implements IDirectory
         $this->id = $id;
     }
 
+	public function getId(){
+	    return $this->id;
+    }
+
     public function getName(){
         return $this->name;
     }
@@ -27,6 +31,16 @@ class BaseDirectory implements IDirectory
     public function getContacts(){
         return $this->contacts;
     }
+    
+    public function getContact($id){
+        foreach($this->contacts as $contact){
+    		if($contact->getId()==$id){
+    			return $contact;
+    		}
+    	}
+        return NULL;
+    }
+    
     public function findContacts($query){
         return null;
     }

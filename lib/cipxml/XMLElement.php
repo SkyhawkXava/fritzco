@@ -2,7 +2,7 @@
 
 namespace cipxml;
 
-class XMLElement{
+abstract class XMLElement{
 
     public function isValid(){
         $domDoc = new \DOMDocument();
@@ -16,4 +16,6 @@ class XMLElement{
         $domDoc->encoding='utf-8';
         return $this->toXML($domDoc)->saveXML();
     }
+    
+    public abstract function toXML(\DOMNode $domNode);
 }

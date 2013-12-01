@@ -20,7 +20,18 @@ class BaseNumber implements INumber
         $this->type = $type;
     }
     public function getType(){
-        return $this->number;
+        return $this->type;
+    }
+    public function getOtherType(){
+        return $this->other_type;
+    }
+    public function getDisplayableType(){
+    	if($this->type==NumberType::OTHER){
+    		return $this->other_type;
+    	}
+    	else{
+        	return NumberType::string($this->type);
+        }
     }
     public function setNumber($number){
         $this->number = $number;

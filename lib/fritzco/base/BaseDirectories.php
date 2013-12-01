@@ -16,6 +16,15 @@ class BaseDirectories implements IDirectories
         return $this->directoryList;
     }
     
+    public function getDirectory($id){
+    	foreach($this->directoryList as $directory){
+    		if($directory->getId()==$id){
+    			return $directory;
+    		}
+    	}
+        return NULL;
+    }
+    
     protected function addDirectory($directory){
         $this->directoryList[] = $directory;
     }
