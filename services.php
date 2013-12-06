@@ -4,7 +4,7 @@
  * @portions Till Steinbach <till.steinbach@gmx.de>
  * @copyright (c) Christian Bartsch, Till Steinbach
  * @license GPL v2
- * @date 2013-11-25
+ * @date 2013-12-02
  *
  * services.php displays pre-configured menu; otherwise create your own and run with parameters:
  * services.php?ip=192.168.1.20&amp;uid=user&amp;pass=secret&amp;cmd=dial&amp;dta=0123456789
@@ -20,8 +20,9 @@ use cipxml\CiscoIPPhoneExecute;
 use cipxml\CiscoIPPhoneMenu;
 use cipxml\CiscoIPPhoneText;
 use cipxml\CiscoIPPhoneInput;
-// use cipxml\DirectoryEntry;
+use cipxml\CiscoIPPhoneResponse;
 use cipxml\ExecuteItem;
+use cipxml\ResponseItem;
 use cipxml\InputItem;
 use cipxml\InputFlags;
 use cipxml\MenuItem;
@@ -32,28 +33,35 @@ use cipxml\Key;
  
 if (isset($_GET)) {
    if (isset($_GET["cmd"])) {
-		$getUser = $_GET["uid"];
-		$getPass = $_GET["pwd"];
-		$getIP = $_GET["ip"];
-		$getCommand = $_GET["cmd"];
-		$getData = $_GET["dta"];
+		if (isset($_GET["uid"])) {
+			$getUser = $_GET["uid"];
+		} else {
+			$getUser = $default_uid;
+		}
+		if (isset($_GET["pwd"])) {
+			$getPass = $_GET["pwd"];
+		} else {
+			$getPass = $default_pass;
+		}
+		if (isset($_GET["ip"])) {
+			$getIP = $_GET["ip"];
+		} else {
+			$getIP = $default_ip;
+		}
+		if (isset($_GET["cmd"])) {
+			$getCommand = $_GET["cmd"];
+		}
+		if (isset($_GET["dta"])) {
+			$getData = $_GET["dta"];
+		} else {
+			$getData = '';
+		}
 	} else {
 		$getCommand = 'default';
 	}
 } else {
 	$getCommand = 'default';
 }
-
-if (empty($getUser)) {
-	$getUser = $default_uid;
-}
-if (empty($getPass)) {
-	$getPass = $default_pass;
-}
-if (empty($getIP)) {
-	$getIP = $default_ip;
-}
-
 
 switch ($getCommand) {
     case 'reboot':
@@ -103,7 +111,7 @@ function cmd_input_display ($getUser, $getPass, $getIP) {
 function cmd_default ($default_uid, $default_pass, $default_ip) {
 
     $menu = new CiscoIpPhoneMenu(SERV_SERVICES_TITLE, SERV_PLEASE_CHOOSE);
-    $menu->addMenuItem(new MenuItem(SERV_TITLE_DISPLAY, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "?cmd=idisplay&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip)));
+    $menu->addMenuItem(new MenuItem(SERV_TITLE_DISPLAY . " " . SERV_BUTTON_ON . "/" . SERV_BUTTON_OFF, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "?cmd=idisplay&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip)));
     $menu->addMenuItem(new MenuItem(SERV_REBOOT_PHONE, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "?cmd=reboot&dta=79xx&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip)));
 	$menu->addMenuItem(new MenuItem(SERV_TESTCALL, "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["REQUEST_URI"] . "?cmd=idial&uid=" . urlencode($default_uid) . "&pwd=" . urlencode($default_pass) . "&ip=" . urlencode($default_ip)));
 	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_SELECT, 1, 'SoftKey:Select'));
@@ -164,21 +172,26 @@ function cmd_dial ($getUser, $getPass, $getIP, $getData, $usehttps) {
 	return TRUE;
  }
 
- // dial; dial number on remote phone, $getData must be numeric longint only
+ // display; turn backlit phone display on or off
 function cmd_display ($getUser, $getPass, $getIP, $getData, $usehttps) {
-	$number = intval($getData);
-	// 0 = off, 1 = on, 2 = default
-
+	// 0:45 = off, 45 mins; 1:120 = on, 120 mins; 2 = default
+	$number = intval($getData[0]);
+	$duration = substr(strrchr($getData, ":"), 1);
+	if (!$duration) {
+			$duration = '0';
+	}
+	
 	$execute = new CiscoIPPhoneExecute;
 	
 	Switch ($number) {
 		Case '0' :
 			$execute->addExecuteItem(new ExecuteItem("Init:Services", 0));
-			$display_state = 'Off:0';
+			$execute->addExecuteItem(new ExecuteItem("Init:Directories", 0));
+			$display_state = 'Off:' . $duration;
 			$display_state_msg = SERV_STATUS_DISPLAY_OFF;
 			break;
 		Case '1' :
-			$display_state = 'On:0';
+			$display_state = 'On:' . $duration;
 			$display_state_msg = SERV_STATUS_DISPLAY_ON;
 			break;
 		Default :
@@ -196,4 +209,28 @@ function cmd_display ($getUser, $getPass, $getIP, $getData, $usehttps) {
 	
 	return TRUE;
  }
+
+ function objectsIntoArray($arrObjData, $arrSkipIndices = array())
+{
+    $arrData = array();
+   
+    // if input is object, convert into array
+    if (is_object($arrObjData)) {
+        $arrObjData = get_object_vars($arrObjData);
+    }
+   
+    if (is_array($arrObjData)) {
+        foreach ($arrObjData as $index => $value) {
+            if (is_object($value) || is_array($value)) {
+                $value = objectsIntoArray($value, $arrSkipIndices); // recursive call
+            }
+            if (in_array($index, $arrSkipIndices)) {
+                continue;
+            }
+            $arrData[$index] = $value;
+        }
+    }
+    return $arrData;
+}
+
 ?>
