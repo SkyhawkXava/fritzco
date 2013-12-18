@@ -3,7 +3,7 @@
  * @author Christian Bartsch <cb AT dreinulldrei DOT de>, bt43a
  * @copyright (c) Christian Bartsch, bt43a
  * @license GPL v2
- * @date 2013-12-16
+ * @date 2013-12-18
  *
  * Installation:
  * 
@@ -11,7 +11,9 @@
  * 2. Creater weather subfolder, then create folders: font, wallpaper and icons.
  * 2. Extract OpenWeatherMap API to /lib folder (=place cmfcmf folder in /lib folder)
  * 3. Copy true type fonts arial.ttf and arialbd.ttf (Windows/Fonts) to weather/font
- * 4. Edit config file in /weather
+ * 4. Change line 56 in /lib/cmfcmf/OpenWeatherMap/Util/Unit.php to:
+		$this->value = round((float)$value, 1);
+ * 5. Edit config file in /weather
  */
  
 require('lib/cmfcmf/OpenWeatherMap.php');
