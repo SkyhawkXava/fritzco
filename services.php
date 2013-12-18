@@ -4,7 +4,7 @@
  * @portions Till Steinbach <till.steinbach@gmx.de>
  * @copyright (c) Christian Bartsch, Till Steinbach
  * @license GPL v2
- * @date 2013-12-02
+ * @date 2013-12-16
  *
  * services.php displays pre-configured menu; otherwise create your own and run with parameters:
  * services.php?ip=192.168.1.20&amp;uid=user&amp;pass=secret&amp;cmd=dial&amp;dta=0123456789
@@ -67,6 +67,9 @@ switch ($getCommand) {
     case 'reboot':
         cmd_reboot($getUser, $getPass, $getIP, $getData, $usehttps);
         break;
+	case 'ireboot':
+        cmd_input_reboot($getUser, $getPass, $getIP, $getData);
+        break;
 	case 'idial':
         cmd_input_dial($getUser, $getPass, $getIP);
         break;
@@ -92,6 +95,17 @@ function cmd_input_dial ($getUser, $getPass, $getIP) {
     $menu = new CiscoIpPhoneInput(SERV_TITLE_DIAL, SERV_INPUT_QUERY, $url);
     $menu->addInputItem(new InputItem(SERV_INPUT_TARGET, 'ip', InputFlags::E, $getIP));
     $menu->addInputItem(new InputItem(SERV_INPUT_NUMBER, 'dta', InputFlags::T, ''));
+	echo (string) $menu;
+
+}
+
+
+function cmd_input_reboot ($getUser, $getPass, $getIP, $getData) {
+
+    $url = "http://" . $_SERVER["SERVER_NAME"] .  $_SERVER["PHP_SELF"] . "?cmd=reboot&uid=" . urlencode($getUser) . "&pwd=" . urlencode($getPass);
+    $menu = new CiscoIpPhoneInput(SERV_TITLE_REBOOT, SERV_INPUT_QUERY, $url);
+    $menu->addInputItem(new InputItem(SERV_INPUT_TARGET, 'ip', InputFlags::E, $getIP));
+    $menu->addInputItem(new InputItem(SERV_INPUT_PHONETYPE, 'dta', InputFlags::A, $getData));
 	echo (string) $menu;
 
 }
@@ -124,7 +138,19 @@ function cmd_default ($default_uid, $default_pass, $default_ip) {
 
 // reboot phone
 function cmd_reboot ($getUser, $getPass, $getIP, $getData, $usehttps) {
-	switch (strtolower($getData)) {
+	$phonetype = strtolower($getData);
+	
+	switch ($phonetype) {
+		case '99':
+			$phonetype = '99xx';
+			break;
+		default:
+			$phonetype = '79xx';
+			break;		
+	}
+	
+	
+	switch ($phonetype) {
 		case '99xx' : // set dta=99xx for 99xx reset command
 			$command[0] = array(0 => "Key:Applications", 1 => "1");
 			$command[1] = array(0 => "Key:KeyPad4", 1 => ".2");
@@ -149,6 +175,22 @@ function cmd_reboot ($getUser, $getPass, $getIP, $getData, $usehttps) {
 		sleep ($command[$i][1]);
 	}
 
+	$xml_response = new SimpleXMLElement($response);
+	
+	if ((string)$xml_response->ResponseItem['Data'] == 'Success') {
+		$response = SERV_STATUS_SUCCESS . '...';
+	} else {
+		if (isset($xml_response['Number'])) {
+			if ($xml_response['Number'] == 4) {
+				$response = SERV_STATUS_ERROR . ' UN-AUTHORIZED';
+			} else {
+				$response = SERV_STATUS_ERROR . ' #' . $xml_response['Number'] == 4;
+			}
+		} else {
+			$response = SERV_STATUS_ERROR . ' Status=' . (string)$xml_response->ResponseItem['Status'] . '  Data=' . (string)$xml_response->ResponseItem['Data'];
+		}
+	}
+
 	$menu = new CiscoIpPhoneText(SERV_TITLE_REBOOT, SERV_STATUS_REBOOT . " " . $getIP, $response);
     $menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_BACK, 3, 'SoftKey:Exit'));
 	echo (string) $menu;
@@ -165,12 +207,29 @@ function cmd_dial ($getUser, $getPass, $getIP, $getData, $usehttps) {
 	$execute->addExecuteItem(new ExecuteItem("Dial:" . $number, 0));
 	$response = $execute->execute($getIP, $getUser, $getPass, $usehttps);
 	
+	$xml_response = new SimpleXMLElement($response);
+	
+	if ((string)$xml_response->ResponseItem['Data'] == 'Success') {
+		$response = SERV_STATUS_SUCCESS . '...';
+	} else {
+		if (isset($xml_response['Number'])) {
+			if ($xml_response['Number'] == 4) {
+				$response = SERV_STATUS_ERROR . ' UN-AUTHORIZED';
+			} else {
+				$response = SERV_STATUS_ERROR . ' #' . $xml_response['Number'] == 4;
+			}
+		} else {
+			$response = SERV_STATUS_ERROR . ' Status=' . (string)$xml_response->ResponseItem['Status'] . '  Data=' . (string)$xml_response->ResponseItem['Data'];
+		}
+	}
+
 	$menu = new CiscoIpPhoneText(SERV_TITLE_DIAL, SERV_STATUS_NUMBERSENT, $response);
 	$menu->addSoftKeyItem(new SoftKeyItem(SERV_BUTTON_BACK, 3, 'SoftKey:Exit'));
 	echo (string) $menu;
 	
 	return TRUE;
  }
+
 
  // display; turn backlit phone display on or off
 function cmd_display ($getUser, $getPass, $getIP, $getData, $usehttps) {
@@ -209,28 +268,5 @@ function cmd_display ($getUser, $getPass, $getIP, $getData, $usehttps) {
 	
 	return TRUE;
  }
-
- function objectsIntoArray($arrObjData, $arrSkipIndices = array())
-{
-    $arrData = array();
-   
-    // if input is object, convert into array
-    if (is_object($arrObjData)) {
-        $arrObjData = get_object_vars($arrObjData);
-    }
-   
-    if (is_array($arrObjData)) {
-        foreach ($arrObjData as $index => $value) {
-            if (is_object($value) || is_array($value)) {
-                $value = objectsIntoArray($value, $arrSkipIndices); // recursive call
-            }
-            if (in_array($index, $arrSkipIndices)) {
-                continue;
-            }
-            $arrData[$index] = $value;
-        }
-    }
-    return $arrData;
-}
 
 ?>
