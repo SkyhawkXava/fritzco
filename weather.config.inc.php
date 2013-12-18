@@ -10,7 +10,8 @@
 	$lang = 'de';
 	$units = 'metric';
 	$gmt_offset = 1; // adjust for your timezone
-	$target = '79x5'; // currently supports 79x5 and 99xx (standard), affects graphics resolution
+	$target = '7945'; // currently supports 7941, 7945 and 99xx (standard), affects graphics resolution
+	$weather_refresh = 180; // refresh weather display after xx seconds
  
 	$wallpaper_path = 'weather/wallpaper/';
 	$wallpaper_file = 'XXXbyYYY_whatever.png'; // should match 498x289 for 99x, 289x168 or 298x156 for 79xx phones
