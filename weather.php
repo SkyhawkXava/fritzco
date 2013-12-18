@@ -3,7 +3,7 @@
  * @author Christian Bartsch <cb AT dreinulldrei DOT de>, bt43a
  * @copyright (c) Christian Bartsch, bt43a
  * @license GPL v2
- * @date 2013-12-06
+ * @date 2013-12-16
  *
  * Installation:
  * 
@@ -14,14 +14,13 @@
  * 4. Edit config file in /weather
  */
  
-use cmfcmf\OpenWeatherMap;
-use cmfcmf\OpenWeatherMap\Exception as OWMException;
 require('lib/cmfcmf/OpenWeatherMap.php');
-
 require_once 'weather.config.inc.php';
 require_once 'weather.locale.german.inc.php';
 require_once __DIR__ . '/lib/cipxml/cipxml.php';
 
+use cmfcmf\OpenWeatherMap;
+use cmfcmf\OpenWeatherMap\Exception as OWMException;
 use cipxml\CiscoIPPhoneImageFile;
 use cipxml\SoftKeyItem;
 
@@ -51,7 +50,17 @@ if (isset($_GET["target"])) {
 }
 
 switch ($target) {
-	case '79x5' :
+	case '7941' :
+		$display_x = 298;
+		$display_y = 144;
+		$display_scale = 0.55;
+		$symbol_scale = 1;
+		$display_offset_x = -15;
+		$display_offset_y = -13;
+		$display_font = 'weather/font/arial.ttf';
+		$display_color = false;
+		break;
+	case '7945' :
 		$display_x = 298;
 		$display_y = 156;
 		$display_scale = 0.59;
@@ -59,8 +68,19 @@ switch ($target) {
 		$display_offset_x = -15;
 		$display_offset_y = -15;
 		$display_font = 'weather/font/arialbd.ttf';
+		$display_color = true;
 		break;
-	default :
+	case '7971' :
+		$display_x = 298;
+		$display_y = 168;
+		$display_scale = 0.59;
+		$symbol_scale = 1;
+		$display_offset_x = -15;
+		$display_offset_y = -5;
+		$display_font = 'weather/font/arialbd.ttf';
+		$display_color = true;
+		break;
+	default : // 9971
 		$display_x = 498;
 		$display_y = 289;
 		$display_scale = 1;
@@ -68,6 +88,7 @@ switch ($target) {
 		$display_offset_x = -5;
 		$display_offset_y = -10;
 		$display_font = 'weather/font/arial.ttf';
+		$display_color = true;
 }
 
 $display_background = $wallpaper_path . $display_x . 'x' .$display_y . '_' . $wallpaper_file;
@@ -103,25 +124,40 @@ if (isset($_GET["png"])) {
 	// start PNG output
 		
 	header('Content-Type: image/png');
-
-	$img_tmp = imagecreatefrompng($display_background);
-	$img=imagecreatetruecolor($display_x,$display_y);
-	imagecopyresampled($img,$img_tmp,0,0,0,0, $display_x,$display_y,$display_x,$display_y);
 	
-	//Farbe für Schrift & Rahmen festlegen
-	$white = imagecolorallocate($img, 255, 255, 255);
-	$grey1 = imagecolorallocate($img, 220, 220, 220);
-	$grey2 = imagecolorallocate($img, 150, 150, 150);
-	$black = imagecolorallocate($img, 50, 50, 50);
+	$img=imagecreatetruecolor($display_x,$display_y);
+	
+	if ($display_color) {
+		//Farbe für Schrift & Rahmen festlegen
+		$white = imagecolorallocate($img, 255, 255, 255);
+		$grey1 = imagecolorallocate($img, 220, 220, 220);
+		$grey2 = imagecolorallocate($img, 150, 150, 150);
+		$black = imagecolorallocate($img, 50, 50, 50);
+		$img_tmp = imagecreatefrompng($display_background);
+		imagecopyresampled($img,$img_tmp,0,0,0,0, $display_x,$display_y,$display_x,$display_y);
+		imagedestroy($img_tmp);
+	} else {
+		//Farbe für Schrift & Rahmen festlegen
+		$white = imagecolorallocate($img, 0, 0, 0);
+		$grey1 = imagecolorallocate($img, 35, 35, 35);
+		$grey2 = imagecolorallocate($img, 150, 150, 150);
+		$black = imagecolorallocate($img, 255, 255, 255);
+		imagefill ($img, 0, 0, $black);
+	}
 	
 	if (!isset($error_abort)) {
 	
 		// $symbol = imagecreatefrompng("http://openweathermap.org/img/w/". $weather->weather->icon .".png"); //Symbol aus Internet verwenden
 		$symbol = imagecreatefrompng("weather/icons/".$weather->weather->icon . ".png"); //eigene Symbole verwenden
 	
+		$symbol_x = (imagesx($symbol) * $symbol_scale);
+		$symbol_y = (imagesy($symbol) * $symbol_scale);
 		//Wetter Symbol einfügen
-		imagecopyresized($img, $symbol, (335 * $display_scale + $display_offset_x), (35 * $display_scale + $display_offset_y), 0, 0, (imagesx($symbol) * $symbol_scale), (imagesy($symbol) * $symbol_scale), imagesx($symbol), imagesy($symbol));
-
+		if (!$display_color) {
+			imagefilter($symbol, IMG_FILTER_NEGATE);
+			imagefilter($symbol, IMG_FILTER_GRAYSCALE);
+		}
+		imagecopyresampled($img, $symbol, (335 * $display_scale + $display_offset_x), (35 * $display_scale + $display_offset_y), 0, 0, $symbol_x, $symbol_y, imagesx($symbol), imagesy($symbol));
 		//Werte in background schreiben
 		ImageTTFText ($img, (33 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x +1), (85 * $display_scale + $display_offset_y +1), $black, $display_font, $weather->temperature->now);
 		ImageTTFText ($img, (33 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x), (85 * $display_scale + $display_offset_y), $white, $display_font, $weather->temperature->now);
@@ -147,12 +183,16 @@ if (isset($_GET["png"])) {
 		ImageTTFText ($img, (13 * $display_scale + 1), 0, ($xpos_tmp +1), (140 * $display_scale + $display_offset_y +1), $black, $display_font, $weather->weather->description);
 		ImageTTFText ($img, (13 * $display_scale + 1), 0, $xpos_tmp, (140 * $display_scale + $display_offset_y), $white, $display_font, $weather->weather->description);
 		if ($position == 0) {
-			ImageTTFText ($img, (13 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x +1), (255 * $display_scale + $display_offset_y +1), $black, $display_font, WEATHER_COLUMN_SUNRISE . ' ' . ($weather->sun->rise->format('H')+ $gmt_offset) . ":". $weather->sun->rise->format('i') . '       ' . WEATHER_COLUMN_SUNRISE . ' '. ($weather->sun->set->format('H')+ $gmt_offset) .":" . $weather->sun->set->format('i'));		
-			ImageTTFText ($img, (13 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x), (255 * $display_scale + $display_offset_y), $white, $display_font, WEATHER_COLUMN_SUNRISE . ' ' . ($weather->sun->rise->format('H')+ $gmt_offset) . ":". $weather->sun->rise->format('i') . '       ' . WEATHER_COLUMN_SUNRISE . ' '. ($weather->sun->set->format('H')+ $gmt_offset) .":" . $weather->sun->set->format('i'));
+			ImageTTFText ($img, (13 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x +1), (255 * $display_scale + $display_offset_y +1), $black, $display_font, WEATHER_COLUMN_SUNRISE . ' ' . ($weather->sun->rise->format('H')+ $gmt_offset) . ":". $weather->sun->rise->format('i') . '      ' . WEATHER_COLUMN_SUNSET . ' '. ($weather->sun->set->format('H')+ $gmt_offset) .":" . $weather->sun->set->format('i'));		
+			ImageTTFText ($img, (13 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x), (255 * $display_scale + $display_offset_y), $white, $display_font, WEATHER_COLUMN_SUNRISE . ' ' . ($weather->sun->rise->format('H')+ $gmt_offset) . ":". $weather->sun->rise->format('i') . '      ' . WEATHER_COLUMN_SUNSET . ' '. ($weather->sun->set->format('H')+ $gmt_offset) .":" . $weather->sun->set->format('i'));
 		} else{
-		ImageTTFText ($img, (13 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x +1), (255 * $display_scale + $display_offset_y +1), $black, $display_font, WEATHER_COLUMN_FORECAST_FROM . ' ' . $weather->time->from->format('H:i') . ' ' . WEATHER_COLUMN_FORECAST_TO . ' ' .  $weather->time->to->format('H:i') . ' ' . WEATHER_SYMBOL_TIME);
-		ImageTTFText ($img, (13 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x), (255 * $display_scale + $display_offset_y), $white, $display_font, WEATHER_COLUMN_FORECAST_FROM . ' ' . $weather->time->from->format('H:i') . ' ' . WEATHER_COLUMN_FORECAST_TO . ' ' .  $weather->time->to->format('H:i') . ' ' . WEATHER_SYMBOL_TIME);
+			ImageTTFText ($img, (13 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x +1), (255 * $display_scale + $display_offset_y +1), $black, $display_font, WEATHER_COLUMN_FORECAST_FROM . ' ' . $weather->time->from->format('H:i') . ' ' . WEATHER_COLUMN_FORECAST_TO . ' ' .  $weather->time->to->format('H:i') . ' ' . WEATHER_SYMBOL_TIME);
+			ImageTTFText ($img, (13 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x), (255 * $display_scale + $display_offset_y), $white, $display_font, WEATHER_COLUMN_FORECAST_FROM . ' ' . $weather->time->from->format('H:i') . ' ' . WEATHER_COLUMN_FORECAST_TO . ' ' .  $weather->time->to->format('H:i') . ' ' . WEATHER_SYMBOL_TIME);
 		}
+		
+		$xpos_tmp = imageftbbox((8 * $display_scale + 1), 0, $display_font, date("H:i:s"), array("linespacing" => 1));
+		$xpos_tmp = round (($display_x - $xpos_tmp[4])-5);		
+		ImageTTFText ($img, (8 * $display_scale + 1), 0, $xpos_tmp, (280 * $display_scale + $display_offset_y), $white, $display_font, date("H:i:s"));
 	
 	} else {
 		ImageTTFText ($img, (13 * $display_scale + 1), 0, (50 * $display_scale + $display_offset_x +1), (50 * $display_scale + $display_offset_y +1), $black, $display_font, wordwrap($error_abort, 35, "\n", true));
@@ -163,6 +203,9 @@ if (isset($_GET["png"])) {
 	imagerectangle($img, 0, 0, $display_x-2, $display_y-2, $grey1);
 	imagerectangle($img, 1, 1, $display_x-1, $display_y-1, $grey2);
 	
+	if (!$display_color) {
+		imagetruecolortopalette($img, true, 4);
+	}
 	imagepng($img);
 	imagedestroy($img);	
 
@@ -198,7 +241,7 @@ if (isset($_GET["png"])) {
 	$menu->addSoftKeyItem(new SoftKeyItem(WEATHER_BUTTON_EXIT, 3, 'Init:Services'));
 
 	header("Content-type: text/xml");
-
+	header("Refresh: $weather_refresh;");
 	echo $menu;
 
 }
