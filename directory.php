@@ -4,7 +4,7 @@
  * @modified Christian Bartsch <cb AT dreinulldrei DOT de>
  * @copyright (c) Till Steinbach
  * @license GPL v2
- * @date 2013-11-17
+ * @date 2013-11-24
  */
 
 require_once 'directory.config.inc.php';
@@ -131,13 +131,13 @@ if((!isset($_GET["book"]) && ($show_BookSelection)) or (!$has_books))
 		}
 		
         $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_SELECT, 1, 'SoftKey:Select'));
-		$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_EXIT, 2, 'SoftKey:Exit'));
+		$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_EXIT, 2, 'Init:Directories'));
         $url = 'http://' . $_SERVER['SERVER_NAME'] .  $_SERVER['PHP_SELF'] .  '?refresh';
         $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_REFRESH, 4, $url));
     }
     else{
         $menu = new CiscoIpPhoneText(PB_PHONEBOOKS, PB_NO_PHONEBOOKS, PB_NO_PHONEBOOKS_DESC);
-        $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 1, 'SoftKey:Exit'));
+        $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_EXIT, 1, 'Init:Directories'));
         $url = 'http://' . $_SERVER['SERVER_NAME'] .  $_SERVER['PHP_SELF'] .  '?refresh';
         $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_REFRESH, 4, $url));
         header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
@@ -202,15 +202,14 @@ else{
 
 				if ($show_BookSelection) { 
 					$url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"];
-					$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 2, $url));
+					$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 3, $url));
 				} else {
-				    $url = 'http://' . $_SERVER['SERVER_NAME'] .  $_SERVER['PHP_SELF'] .  '?refresh';
-					$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_REFRESH, 2, $url));
+					$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_EXIT, 3, 'Init:Directories'));
 				}
 				$get = $_GET;
 				unset($get['refresh']);
                 $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query(array_merge($get,array("search"=>true)));
-                $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_SEARCH, 3, $url));
+                $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_SEARCH, 2, $url));
  
 				unset($get['offset']);
 				$tmp_url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
@@ -228,7 +227,11 @@ else{
                     $url = $tmp_url . "&offset=" .  ($offset+30);
                     $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_NEXT_PAGE, 4, $url));
 					$menu->addKeyItem(new KeyItem(Key::NavRight,$url));
-                }
+                } else {
+				    $url = 'http://' . $_SERVER['SERVER_NAME'] .  $_SERVER['PHP_SELF'] .  '?refresh';
+					$menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_REFRESH, 4, $url));
+				}
+				
             }
             else{
                 $menu = new CiscoIpPhoneText(PB_NAME_GENERAL . ' ' . PB_PHONEBOOK, PB_NO_ENTRIES, PB_NO_ENTRIES_DESC);
@@ -288,7 +291,7 @@ else{
             $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_DETAILS, 4, $url));
 			unset($get['id']);
             $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
-            $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 2, $url));
+            $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 3, $url));
 
         }
         else{
@@ -314,7 +317,7 @@ else{
 			unset($get['refresh']);
             unset($get['details']);
             // $url = "http://" . $_SERVER["SERVER_NAME"] . $_SERVER["PHP_SELF"] . '?' . http_build_query($get);
-            $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 2, 'SoftKey:Exit'));
+            $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_BACK, 3, 'SoftKey:Exit'));
         }
     }
 }
