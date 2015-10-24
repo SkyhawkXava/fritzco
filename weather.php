@@ -16,7 +16,7 @@
  * 5. Edit config file in /weather
  */
  
-require('lib/cmfcmf/OpenWeatherMap.php');
+require('lib/Cmfcmf/OpenWeatherMap.php');
 require_once 'weather.config.inc.php';
 require_once 'weather.locale.german.inc.php';
 require_once __DIR__ . '/lib/cipxml/cipxml.php';
@@ -100,13 +100,13 @@ $owm = new OpenWeatherMap();
 //Werte auslesen
 if ($position == 0) {
 	try {
-		$weather = $owm->getWeather($location_id, $units, $lang);
+		$weather = $owm->getWeather($location_id, $units, $lang, $weather_apikey);
 	} catch (Exception $e) {
 		$error_abort = $e->getMessage();
 	}
 } else{
 	try {
-		$forecast = $owm->getWeatherForecast($location_id, $units, $lang, '', 3);
+		$forecast = $owm->getWeatherForecast($location_id, $units, $lang, $weather_apikey, 3);
 		$forecast_size = count($forecast);
 		$i = 0;
 		foreach($forecast as $weather) {
