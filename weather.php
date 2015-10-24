@@ -3,7 +3,7 @@
  * @author Christian Bartsch <cb AT dreinulldrei DOT de>, bt43a
  * @copyright (c) Christian Bartsch, bt43a
  * @license GPL v2
- * @date 2013-12-18
+ * @date 2015-10-24
  *
  * Installation:
  * 
