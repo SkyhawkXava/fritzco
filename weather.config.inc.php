@@ -5,6 +5,7 @@
  * @license GPL v2
  * @date 2013-12-06
  */
+	$weather_apikey = 'xxxxxxx'; //GET YOUR OWN FREE API KEY AT http://www.openweathermap.org/
 	$weather_city = 'Berlin';
 	$weather_id = ; // can be omitted, unless there are several matches for your city by name
 	$lang = 'de';
