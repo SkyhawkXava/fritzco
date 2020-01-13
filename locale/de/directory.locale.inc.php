@@ -43,5 +43,8 @@
  define ('PB_INPUT_NAME', 'Name');
  define ('PB_INPUT_NUMBER', 'Nummer');
  define ('PB_NO_FURTHER_INFORMATION', 'Keine weiteren Informationen');
- 
+ define ('PB_BOOKS_ERROR', 'Fehler');
+ define ('PB_BOOKS_ADMIN_CHECK_FOLDER_RIGHTS', "Administrator: Bitte Schreibrechte für '/books' prüfen.");
+ define ('PB_BOOKS_ADMIN_CHECK_LIBCURL', "Administrator: Die Biblithek 'libcurl' steht nicht zur Verfügung.");
+ define ('PB_BOOKS_ADMIN_CHECK_MBSTRING', "Administrator: Die Erweiterung bzw. das Modul 'libcurl' steht nicht zur Verfügung.");
 ?>

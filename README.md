@@ -1,4 +1,4 @@
-fritzco
+>fritzco
 =======
 
 a set of scripts to add functionality to a Cisco 99xx phone connected to fritzboxes
@@ -6,13 +6,15 @@ a set of scripts to add functionality to a Cisco 99xx phone connected to fritzbo
 Requirements:
 -------------
 * Webserver
-* PHP 5.3
+* PHP >=5.3
+
+The documentation can be found at: https://github.com/SkyhawkXava/fritzco/wiki
 
 How to Install:
 ---------------
 1. Put all files on your webserver
-2. Add write permission to folder "books"
-3. Change credentials in config.inc.php
+2. Add write permission to folder "/books" and "/log"
+3. Change credentials in "/config/*.config.inc.php"
 4. Add this to your SEP<MAC>.cnf
 ```xml
 	    <phoneServices>

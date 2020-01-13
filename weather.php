@@ -16,9 +16,11 @@
  * 5. Edit config file in /weather
  */
  
-require('lib/Cmfcmf/OpenWeatherMap.php');
-require_once 'weather.config.inc.php';
-require_once 'weather.locale.german.inc.php';
+
+require_once __DIR__ . '/config/general.config.inc.php';
+require_once __DIR__ . '/lib/Cmfcmf/OpenWeatherMap.php');
+require_once __DIR__ . '/config/weather.config.inc.php';
+require_once __DIR__ . '/locale/weather.locale.inc.php';
 require_once __DIR__ . '/lib/cipxml/cipxml.php';
 
 use cmfcmf\OpenWeatherMap;

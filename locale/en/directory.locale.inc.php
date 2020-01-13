@@ -43,5 +43,8 @@
  define ('PB_INPUT_NAME', 'Name');
  define ('PB_INPUT_NUMBER', 'Number');
  define ('PB_NO_FURTHER_INFORMATION', 'No further information');
- 
+ define ('PB_BOOKS_ERROR', 'Error');
+ define ('PB_BOOKS_ADMIN_CHECK_FOLDER_RIGHTS', "Administrator: Please check write right for '/books'.");
+ define ('PB_BOOKS_ADMIN_CHECK_LIBCURL', "Administrator: The extension/module 'libcurl' is not available.");
+ define ('PB_BOOKS_ADMIN_CHECK_MBSTRING', "Administrator: The extension/module 'mbstring' is not available.");
 ?>

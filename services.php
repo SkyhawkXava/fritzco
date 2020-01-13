@@ -12,8 +12,9 @@
 
 header("Content-type: text/xml");
 
-require_once 'services.config.inc.php';
-require_once 'services.locale.german.inc.php';
+require_once __DIR__ . '/config/general.config.inc.php';
+require_once __DIR__ . '/config/services.config.inc.php';
+require_once __DIR__ . '/locale/' . $language . '/services.locale.inc.php';
 require_once __DIR__ . '/lib/cipxml/cipxml.php';
 
 use cipxml\CiscoIPPhoneExecute;

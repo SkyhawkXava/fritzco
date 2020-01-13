@@ -1,16 +1,19 @@
 <?php
 /*
  * @author Till Steinbach <till.steinbach@gmx.de>
- * @modified Christian Bartsch <cb AT dreinulldrei DOT de>
+ * @modified Christian Bartsch <cb AT dreinulldrei DOT de> and SkyhawkXava
  * @copyright (c) Till Steinbach
  * @license GPL v2
- * @date 2013-11-24
+ * @date 2020-01-08
  */
 
-require_once 'directory.config.inc.php';
-require_once 'directory.locale.german.inc.php';
+require_once __DIR__ . '/config/general.config.inc.php';
+require_once __DIR__ . '/config/directory.config.inc.php';
+require_once __DIR__ . '/locale/' . $language . '/directory.locale.inc.php';
+require_once __DIR__ . '/lib/logging/logging.php';
 require_once __DIR__ . '/lib/cipxml/cipxml.php';
 
+use logging\logFile;
 use cipxml\CiscoIPPhoneDirectory;
 use cipxml\CiscoIPPhoneMenu;
 use cipxml\CiscoIPPhoneText;
@@ -27,83 +30,170 @@ header("Content-type: text/xml");
 
 $translation = array("home" => PB_FIELD_HOME, "mobile" => PB_FIELD_MOBILE, "work" => PB_FIELD_WORK, "fax" => PB_FIELD_FAX, "fax_work" => PB_FIELD_FAX_WORK, "private" => PB_FIELD_PRIVATE, "business" => PB_FIELD_BUSINESS, "other" => PB_FIELD_OTHER);
 
+$log = new logFile ($logging_activated, $logging_format, $logging_path);
+$log->newEntry ("directory.php: started");
+
 if(isset($_GET["refresh"])) {
-	if (!$runon_Fritzbox) {
-		$fritzbox_cfg = 'http://' . $fritzbox_ip . '/cgi-bin/firmwarecfg';
-		$ch = curl_init('http://' . $fritzbox_ip . '/login_sid.lua');
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		$login = curl_exec($ch);
-		$session_status_simplexml = simplexml_load_string($login);
-		if ($session_status_simplexml->SID != '0000000000000000'){
-			$SID = $session_status_simplexml->SID;
-		} else {
-			$challenge = $session_status_simplexml->Challenge;
-			$response = $challenge . '-' . md5(mb_convert_encoding($challenge . '-' . $fritzbox_password, "UCS-2LE", "UTF-8"));
-			curl_setopt($ch, CURLOPT_POSTFIELDS, "response={$response}&page=/login_sid.lua");
-			$sendlogin = curl_exec($ch);
-			$session_status_simplexml = simplexml_load_string($sendlogin);
+	$log->newEntry ("directory.php: execute: refresh");
+	if (is_writable("books/") AND function_exists('curl_init') AND function_exists('mb_convert_encoding')) {
+		$log->newEntry ("directory.php: execute: refresh > /books is writable");
+		if (!$runon_Fritzbox) {
+			$log->newEntry ("directory.php: execute: refresh > webserver is not running on Fritz!Box");
+			$fritzbox_cfg = 'http://' . $fritzbox_ip . '/cgi-bin/firmwarecfg';
+			$ch = curl_init('http://' . $fritzbox_ip . '/login_sid.lua');
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($ch, CURLOPT_FAILONERROR, true);
+			$login = curl_exec($ch);
 
-			if ($session_status_simplexml->SID != '0000000000000000'){
-				$SID = $session_status_simplexml->SID;
+			if (curl_errno($ch)) {
+			    $log->newEntry ("directory.php: execute: refresh > ERROR: ".curl_error($ch));
+			}
+
+			if (((bool)$ch===false) OR (curl_getinfo($ch, CURLINFO_RESPONSE_CODE)!=200)) {
+				if (curl_getinfo($ch, CURLINFO_RESPONSE_CODE) != null) {
+					$http_response_code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+					$log->newEntry("A");
+				} else {
+					$html_response_code = "n/a";
+					$log->newEntry("B");
+				}
+				$log->newEntry ("directory.php: execute: refresh > ERROR: HTTP-CODE ".$html_response_code." => ".curl_getinfo($ch, CURLINFO_EFFECTIVE_URL));
 			} else {
-				$menu = new CiscoIpPhoneText(PB_REFRESH, PB_NAME_GENERAL . ' ' . PB_LOGIN_FAILED, PB_ADMIN_CHECKPWD);
-				echo '<?xml version="1.0" encoding="utf-8" ?>';
-				echo (string) $menu; 
-				return;
-			}
-		}
-		
-		foreach(scandir("books") as $book){
-			if(is_file("books/$book")){
-				unlink("books/$book");
-			}
-		}
-		
-		$tmp_telefonbuch = $telefonbuch;
-		
-		do {
-			curl_setopt($ch, CURLOPT_URL, $fritzbox_cfg);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, array("sid" => $SID, "PhonebookId" => $tmp_telefonbuch, "PhonebookExportName" => "Telefonbuch", "PhonebookExport" => ""));
-			$book = curl_exec($ch);
-			$xml = simplexml_load_string($book);
-			if(!$xml->phonebook) {
-				break;
-			}
-			file_put_contents("books/$tmp_telefonbuch.xml",$book, LOCK_EX);
-			$tmp_telefonbuch++;
-		} while (true);
-		
-		curl_close($ch);
+				$session_status_simplexml = simplexml_load_string($login);
+				$log->newEntry ("directory.php: execute: refresh > SID={$session_status_simplexml->SID}");
+				if ($session_status_simplexml->SID != '0000000000000000') {
+					$log->newEntry ("directory.php: execute: refresh > SID={$session_status_simplexml->SID}");
+					$SID = $session_status_simplexml->SID;
+				} else {
+					$challenge = $session_status_simplexml->Challenge;
+					$response = $challenge . '-' . md5(mb_convert_encoding($challenge . '-' . $fritzbox_password, "UCS-2LE", "UTF-8"));
+					if (isset($fritzbox_user)) {
+						$log->newEntry ("directory.php: execute: refresh > Username is set to '{$fritzbox_user}'");
+						$StringCURLOptPostfields = "&username={$fritzbox_user}&response={$response}&page=/login_sid.lua";
+					} else {
+						$log->newEntry ("directory.php: execute: refresh > Username is not set");
+						$StringCURLOptPostfields = "response={$response}&page=/login_sid.lua";
+					}
+					$log->newEntry ("directory.php: execute: refresh > CURLOPT_POSTFIELDS={$StringCURLOptPostfields}");
 
-	} else {
-		do { // for Fritzboxes with webserver -> direct copy
-			shell_exec("pbd --exportbook " . $tmp_telefonbuch);
-			// shell_exec("cat /tmp/pbd.export > " . FRITZBOX_LOCAL_PATH . $tmp_telefonbuch . ".xml");
-			// if (!file_exists(FRITZBOX_LOCAL_PATH . $tmp_telefonbuch . ".xml")) {
-			//	break;
-			// }
-			if (!copy("/tmp/pbd.export", FRITZBOX_LOCAL_PATH . $tmp_telefonbuch . ".xml")) {
-				break;
+					curl_setopt($ch, CURLOPT_POSTFIELDS, $StringCURLOptPostfields);
+					$sendlogin = curl_exec($ch);
+					$session_status_simplexml = simplexml_load_string($sendlogin);
+
+					if ($session_status_simplexml->SID != '0000000000000000'){
+						$log->newEntry ("directory.php: execute: refresh > Login successful");
+						$SID = $session_status_simplexml->SID;
+					} else {
+						$log->newEntry ("directory.php: execute: refresh > Login failed");
+						$menu = new CiscoIpPhoneText(PB_REFRESH, PB_NAME_GENERAL . ' ' . PB_LOGIN_FAILED, PB_ADMIN_CHECKPWD);
+						echo '<?xml version="1.0" encoding="utf-8" ?>';
+						echo (string) $menu; 
+						return;
+					}
+				}
+
+				foreach(scandir("books") as $book){
+					if(is_file("books/$book")){
+						unlink("books/$book");
+					}
+				}
+
+				$tmp_telefonbuch = $telefonbuch;
+
+				do {
+					$log->newEntry ("directory.php: execute: refresh > try to download phonebook: id=".$tmp_telefonbuch);
+					curl_setopt($ch, CURLOPT_URL, $fritzbox_cfg);
+					curl_setopt($ch, CURLOPT_POSTFIELDS, array("sid" => $SID, "PhonebookId" => $tmp_telefonbuch, "PhonebookExportName" => "Telefonbuch", "PhonebookExport" => ""));
+					$book = curl_exec($ch);
+					$xml = simplexml_load_string($book);
+					if ((bool) $xml === false) { // catch error!
+						foreach(libxml_get_errors() as $error) {
+							$log->newEntry ("directory.php: execute: refresh > phonebook id=".$tmp_telefonbuch." - ERROR: ". $error->message);
+						}
+					}
+					if(!$xml->phonebook) {
+						$log->newEntry ("directory.php: execute: refresh > phonebook id=".$tmp_telefonbuch." does not exist - download-process is stopped");
+						break;
+					}
+					if ((bool) file_put_contents("books/$tmp_telefonbuch.xml",$book, LOCK_EX)) {
+						$log->newEntry ("directory.php: execute: refresh > phonebook id=".$tmp_telefonbuch." saved");
+					} else {
+						$log->newEntry ("directory.php: execute: refresh > ERROR: could not save phonebook id=".$tmp_telefonbuch);
+					}
+					$tmp_telefonbuch++;
+				} while (true);
+
+				curl_close($ch);
 			}
-			$tmp_telefonbuch++;
-		} while (true);
+
+			} else {
+			$log->newEntry ("directory.php: execute: refresh > webserver is running on Fritz!Box");
+			do { // for Fritzboxes with webserver -> direct copy
+				shell_exec("pbd --exportbook " . $tmp_telefonbuch);
+				// shell_exec("cat /tmp/pbd.export > " . FRITZBOX_LOCAL_PATH . $tmp_telefonbuch . ".xml");
+				// if (!file_exists(FRITZBOX_LOCAL_PATH . $tmp_telefonbuch . ".xml")) {
+				//	break;
+				// }
+				if (!copy("/tmp/pbd.export", FRITZBOX_LOCAL_PATH . $tmp_telefonbuch . ".xml")) {
+					break;
+				}
+				$tmp_telefonbuch++;
+			} while (true);
+		}
+
+		header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
+	} else {
+		$error_msg = "";
+
+		// ERROR: No rights to write	
+		if(!is_writable("books/")) {
+			$log->newEntry ("directory.php: execute: refresh > '/books' is not writeable");
+			$error_msg = PB_BOOKS_ADMIN_CHECK_FOLDER_RIGHTS;
+		}
+
+		// ERROR: The extensioin/module 'libcurl' is not available
+		if (!function_exists('curl_init')) {
+			$log->newEntry ("directory.php: execute: refresh > the extension/module 'libcurl' is not available");
+			if (strlen($error_msg) > 0) {
+				$error_msg .= "\r\n";
+			}
+			$error_msg .= PB_BOOKS_ADMIN_CHECK_LIBCURL;
+		}
+
+		// ERROR: The extension/module 'mbstring' is not available
+		if (!function_exists('mb_convert_encoding')) {
+			$log->newEntry ("directory.php: execute: refresh > the extension/module 'mbstring' is not available");
+			if (strlen($error_msg) > 0) {
+				$error_msg .= "\r\n";
+			}
+			$error_msg .= PB_BOOKS_ADMIN_CHECK_MBSTRING;
+		}
+
+		$menu = new CiscoIpPhoneText(PB_REFRESH, PB_NAME_GENERAL . ' ' . PB_BOOKS_ERROR, $error_msg);
+		echo '<?xml version="1.0" encoding="utf-8" ?>';
+		echo (string) $menu; 
+		return;
 	}
-	
-	header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
 }
 
 $has_books = false;
 foreach(scandir("books") as $book){
-    if(is_file("books/$book") && strpos($book,'.xml') !== false){
-        $has_books=true;
-    }
+		if(is_file("books/$book") && strpos($book,'.xml') !== false){
+		$has_books=true;
+	}
+}
+if ($has_books) {
+	$log->newEntry ("directory.php: phonebook exists");
+} else {
+	$log->newEntry ("directory.php: phonebook dosn't exist");
 }
 
 if((!isset($_GET["book"]) && ($show_BookSelection)) or (!$has_books))
 {
+    $log->newEntry ("directory.php: execute: book");
     if($has_books){
         $menu = new CiscoIpPhoneMenu(PB_PHONEBOOKS, PB_SELECT_PHONEBOOK);
-		
+
 		if($show_MissedCalls){
             $menu->addMenuItem(new MenuItem(PB_APP_CALLSMISSED, 'Application:Cisco/MissedCalls'));
         }
@@ -113,7 +203,7 @@ if((!isset($_GET["book"]) && ($show_BookSelection)) or (!$has_books))
         if($show_MissedCalls){
             $menu->addMenuItem(new MenuItem(PB_APP_CALLSPLACED, 'Application:Cisco/PlacedCalls'));
         }
-		
+
         foreach(scandir("books") as $book){
             if(is_file("books/$book") && strpos($book,'.xml') !== false){
                $input = file_get_contents("books/$book");
@@ -142,8 +232,7 @@ if((!isset($_GET["book"]) && ($show_BookSelection)) or (!$has_books))
         $menu->addSoftKeyItem(new SoftKeyItem(PB_BUTTON_REFRESH, 4, $url));
         header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
     }
-}
-else{
+} else{
     if (isset($_GET["book"])) {
 	  $tmp_book = $_GET["book"];
 	} else {
@@ -163,6 +252,7 @@ else{
         }
     }
     if(isset($_GET["querynumber"]) && strlen($_GET["querynumber"])){
+		$log.newEntry ("directory.php: execute: querynumber");
         for($i = count($xml->phonebook->contact)-1; $i >= 0; --$i){
             if($xml->phonebook->contact[$i]->telephony){
                 $remove = true;
@@ -181,6 +271,7 @@ else{
     }
 
     if(!isset($_GET["id"])){
+		$log->newEntry ("directory.php: execute: id");
         if(!isset($_GET["search"])){
             // header('Expires: ' . gmdate('D, d M Y H:i:s', time()-60*60) . ' GMT');
             $offset = 0;
@@ -188,7 +279,7 @@ else{
                 $offset = (int) $_GET["offset"];
             }
             $attributes = $xml->phonebook->attributes();
-           
+
             if(count($xml->phonebook->contact)>0){
                 $menu = new CiscoIpPhoneMenu(PB_NAME_GENERAL . ' ' . PB_PHONEBOOK, $attributes['name']);
                 for ($i = $offset; $i < count($xml->phonebook->contact) && $i<$offset+30; ++$i){ 

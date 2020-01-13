@@ -10,15 +10,16 @@
 
  // Configuration; add devices with user and password here
  
- $authdata = array( array( 	'devicename' => 'SEP00123456789',
+ $authdata = array( array( 	'devicename' => 'SEPXXXXXXXXXXXX',
 							'UserID' => 'cisco', 
 							'Password' => 'phone',
                        
                     ),
-				array( 	'devicename' => 'SEP00987654321',
+				array( 	'devicename' => 'SEPXXXXXXXXXXX',
 							'UserID' => 'cisco', 
 							'Password' => 'phone',
                        
                     )
              );
+
 ?>

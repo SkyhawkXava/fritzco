@@ -1,0 +1,27 @@
+fritzco
+=======
+
+2020-01-13: Ver. 1.2 by SkyhawkXava
+ - bugfixed: minor bugs fixed
+ - improved: debug-logging expanded.
+ 
+2020-01-08: Ver. 1.2beta1 (release candidate) by SkyhawkXava
+ - improvemed: New folder structure: own folders for locale and config files.
+ - improvemee: For easy language switch, every translation got his own folder.
+ - improvemed: Check for write right in '/books'.
+ - added: A general module independend config file.
+ - added: debug-loging. (Can be activeted in '/config/general.config.inc.php'.)
+ - added: Config parameter too language choice in general configs.
+ 
+2015-10-24: Version 1.1 by Christian Bartsch
+- added: weather.php
+- improved: menu-navigation
+
+2013-11-24: Ver. 1.0 by Till Steinbach 
+- first release.
+
+2013-11-12: Ver. 1.1alpha1 modified by Christian Bartsch and Till Steinbach
+
+2013-11-08: Ver. 1.0 by Till Steinbach 
+
+2013-11-05: Ver. 1.0alpha1 by Till Steinbach 
